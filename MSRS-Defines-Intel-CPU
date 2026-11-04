@@ -1,0 +1,2100 @@
+
+[64 bits]
+%define MSR_IA32_FEATURE_CONTROL                    0x03A
+%define MSR_IA32_SYSENTER_CS                        0x174
+%define MSR_IA32_SYSENTER_ESP                       0x175
+%define MSR_IA32_SYSENTER_EIP                       0x176
+%define MSR_IA32_DEBUGCTL                           0x1D9
+%define MSR_IA32_VMX_BASIC                          0x480
+%define MSR_IA32_VMX_PINBASED_CTLS                  0x481
+%define MSR_IA32_VMX_PROCBASED_CTLS                 0x482
+%define MSR_IA32_VMX_EXIT_CTLS                      0x483
+%define MSR_IA32_VMX_ENTRY_CTLS                     0x484
+%define MSR_IA32_VMX_MISC                           0x485
+%define MSR_IA32_VMX_CR0_FIXED0                     0x486
+%define MSR_IA32_VMX_CR0_FIXED1                     0x487
+%define MSR_IA32_VMX_CR4_FIXED0                     0x488
+%define MSR_IA32_VMX_CR4_FIXED1                     0x489
+%define MSR_IA32_VMX_PROCBASED_CTLS2		    0x48B
+%define MSR_IA32_VMX_EPT_VPID_CAP		    0x48C
+%define MSR_IA32_VMX_TRUE_PINBASED_CTLS		    0x48D
+%define MSR_IA32_VMX_TRUE_PROCBASED_CTLS	    0x48E
+%define MSR_IA32_VMX_TRUE_EXIT_CTLS		    0x48F
+%define MSR_IA32_VMX_TRUE_ENTRY_CTLS		    0x490
+%define MSR_IA32_VMX_VMFUNC			    0x491
+
+%define IA32_FEATURE_CONTROL_MSR_LOCK                     0x0001
+%define IA32_FEATURE_CONTROL_MSR_ENABLE_VMXON_INSIDE_SMX  0x0002
+%define IA32_FEATURE_CONTROL_MSR_ENABLE_VMXON_OUTSIDE_SMX 0x0004
+%define IA32_FEATURE_CONTROL_MSR_SENTER_PARAM_CTL         0x7f00
+%define IA32_FEATURE_CONTROL_MSR_ENABLE_SENTER            0x8000
+
+%define	MSR_IA32_FS_BASE    			   0xc0000100
+%define	MSR_IA32_GS_BASE	                   0xc0000101
+
+RevId			equ      		:32	; Bits 31...0 contain the VMCS revision identifier
+szVmxOnRegion	equ				:12	; Bits 43...32 report 
+RegionClear		equ				:1	; Bit 44 set only if bits 32-43 are clear
+Reserved1		equ				:3	; Undefined
+PhyAddrWidth	equ				:1	; Physical address width for referencing VMXON, VMCS, etc.
+DualMon			equ				:1	; Reports whether the processor supports dual-monitor
+									; treatment of SMI and SMM
+MemType			equ				:4	; Memory type that the processor uses to access the VMCS
+VmExitReport 	equ			    :1	; Reports weather the procesor reports info in the VM-exit
+									; instruction information field on VM exits due to execution
+									; of the INS and OUTS instructions
+Reserved2		equ				:9	; Undefined
+
+
+
+
+
+
+
+
+
+https://github.com/rohaaan/hypervisor-for-beginners/blob/master/msr.h
+https://github.com/ayoubfaouzi/cpu-internals/blob/main/volume1-basic-architecture/chapter-03-basic-execution-environment.md
+https://github.com/ia32-doc/ia32-doc/blob/main/yaml/Intel/ModelSpecificRegisters/ArchitecturalMsr.yml
+https://github.com/ia32-doc/ia32-doc/blob/main/yaml/Intel/VMX/VMCS.yml
+https://github.com/gz/rust-x86/blob/master/src/vmx/vmcs.rs
+https://github.com/llnl/msr-genie/tree/main/Intel_MSR_Tables
+
+; ==============================================================================
+; INTEL VMCS COMPONENT ENCODING DEFINITIONS (x86_64)
+; ==============================================================================
+
+; ------------------------------------------------------------------------------
+; 16-Bit Control Fields
+; ------------------------------------------------------------------------------
+VMCS_CTRL_VIRTUAL_PROCESSOR_IDENTIFIER  EQU 0x00000000
+VMCS_CTRL_POSTED_INTERRUPT_NOTI_VECTOR  EQU 0x00000002
+VMCS_CTRL_EPTP_INDEX                    EQU 0x00000004
+
+; ------------------------------------------------------------------------------
+; 16-Bit Guest State Fields
+; ------------------------------------------------------------------------------
+VMCS_GUEST_ES_SELECTOR                  EQU 0x00000800
+VMCS_GUEST_CS_SELECTOR                  EQU 0x00000802
+VMCS_GUEST_SS_SELECTOR                  EQU 0x00000804
+VMCS_GUEST_DS_SELECTOR                  EQU 0x00000806
+VMCS_GUEST_FS_SELECTOR                  EQU 0x00000808
+VMCS_GUEST_GS_SELECTOR                  EQU 0x0000080A
+VMCS_GUEST_LDTR_SELECTOR                EQU 0x0000080C
+VMCS_GUEST_TR_SELECTOR                  EQU 0x0000080E
+VMCS_GUEST_INTERRUPT_STATUS             EQU 0x00000810
+VMCS_GUEST_PML_INDEX                    EQU 0x00000812
+
+; ------------------------------------------------------------------------------
+; 16-Bit Host State Fields
+; ------------------------------------------------------------------------------
+VMCS_HOST_ES_SELECTOR                   EQU 0x00000C00
+VMCS_HOST_CS_SELECTOR                   EQU 0x00000C02
+VMCS_HOST_SS_SELECTOR                   EQU 0x00000C04
+VMCS_HOST_DS_SELECTOR                   EQU 0x00000C06
+VMCS_HOST_FS_SELECTOR                   EQU 0x00000C08
+VMCS_HOST_GS_SELECTOR                   EQU 0x00000C0A
+VMCS_HOST_TR_SELECTOR                   EQU 0x00000C0C
+
+; ------------------------------------------------------------------------------
+; 64-Bit Control Fields
+; ------------------------------------------------------------------------------
+VMCS_CTRL_IO_BITMAP_A_ADDRESS           EQU 0x00002000
+VMCS_CTRL_IO_BITMAP_B_ADDRESS           EQU 0x00002002
+VMCS_CTRL_MSR_BITMAP_ADDRESS            EQU 0x00002004
+VMCS_CTRL_VMEXIT_MSR_STORE_ADDRESS      EQU 0x00002006
+VMCS_CTRL_VMEXIT_MSR_LOAD_ADDRESS       EQU 0x00002008
+VMCS_CTRL_VMENTRY_MSR_LOAD_ADDRESS      EQU 0x0000200A
+
+; ==============================================================================
+; INTEL VMCS COMPONENT ENCODING DEFINITIONS (PART 2)
+; ==============================================================================
+
+; ------------------------------------------------------------------------------
+; 64-Bit Control Fields
+; ------------------------------------------------------------------------------
+VMCS_CTRL_EOI_EXIT_BITMAP_0             EQU 0x0000201C
+VMCS_CTRL_EOI_EXIT_BITMAP_1             EQU 0x0000201E
+VMCS_CTRL_EOI_EXIT_BITMAP_2             EQU 0x00002020
+VMCS_CTRL_EOI_EXIT_BITMAP_3             EQU 0x00002022
+VMCS_CTRL_EPT_POINTER_LIST_ADDRESS      EQU 0x00002024
+VMCS_CTRL_VMREAD_BITMAP_ADDRESS         EQU 0x00002026
+VMCS_CTRL_VMWRITE_BITMAP_ADDRESS        EQU 0x00002028
+VMCS_CTRL_VIRT_EXCEPTION_INFO_ADDRESS   EQU 0x0000202A
+VMCS_CTRL_XSS_EXITING_BITMAP            EQU 0x0000202C
+VMCS_CTRL_ENCLS_EXITING_BITMAP          EQU 0x0000202E
+VMCS_CTRL_TSC_MULTIPLIER                EQU 0x00002032
+
+; ------------------------------------------------------------------------------
+; 64-Bit Read-Only Data Fields (VM-Exit Information)
+; ------------------------------------------------------------------------------
+VMCS_GUEST_PHYSICAL_ADDRESS             EQU 0x00002400
+
+; ------------------------------------------------------------------------------
+; 64-Bit Guest State Fields
+; ------------------------------------------------------------------------------
+VMCS_GUEST_VMCS_LINK_POINTER            EQU 0x00002800
+VMCS_GUEST_DEBUGCTL                     EQU 0x00002802
+VMCS_GUEST_PAT                          EQU 0x00002804
+VMCS_GUEST_EFER                         EQU 0x00002806
+VMCS_GUEST_PERF_GLOBAL_CTRL             EQU 0x00002808
+VMCS_GUEST_PDPTE0                       EQU 0x0000280A
+VMCS_GUEST_PDPTE1                       EQU 0x0000280C
+VMCS_GUEST_PDPTE2                       EQU 0x0000280E
+VMCS_GUEST_PDPTE3                       EQU 0x00002810
+
+; ------------------------------------------------------------------------------
+; 64-Bit Host State Fields
+; ------------------------------------------------------------------------------
+VMCS_HOST_PAT                           EQU 0x00002C00
+
+; ==============================================================================
+; INTEL VMCS COMPONENT ENCODING DEFINITIONS (PART 3)
+; ==============================================================================
+
+; ------------------------------------------------------------------------------
+; 32-Bit Control Fields
+; ------------------------------------------------------------------------------
+VMCS_CTRL_PIN_BASED_VM_EXECUTION_CONTROLS       EQU 0x00004000
+VMCS_CTRL_PROCESSOR_BASED_VM_EXECUTION_CONTROLS EQU 0x00004002
+VMCS_CTRL_EXCEPTION_BITMAP                      EQU 0x00004004
+VMCS_CTRL_PAGEFAULT_ERROR_CODE_MASK             EQU 0x00004006
+VMCS_CTRL_PAGEFAULT_ERROR_CODE_MATCH            EQU 0x00004008
+VMCS_CTRL_CR3_TARGET_COUNT                      EQU 0x0000400A
+VMCS_CTRL_VMEXIT_CONTROLS                       EQU 0x0000400C
+VMCS_CTRL_VMEXIT_MSR_STORE_COUNT                EQU 0x0000400E
+VMCS_CTRL_VMEXIT_MSR_LOAD_COUNT                 EQU 0x00004010
+VMCS_CTRL_VMENTRY_CONTROLS                      EQU 0x00004012
+VMCS_CTRL_VMENTRY_MSR_LOAD_COUNT                EQU 0x00004014
+VMCS_CTRL_VMENTRY_INTERRUPTION_INFO_FIELD       EQU 0x00004016
+VMCS_CTRL_VMENTRY_EXCEPTION_ERROR_CODE          EQU 0x00004018
+VMCS_CTRL_VMENTRY_INSTRUCTION_LENGTH            EQU 0x0000401A
+VMCS_CTRL_TPR_THRESHOLD                         EQU 0x0000401C
+VMCS_CTRL_SECONDARY_PROC_BASED_VM_EXEC_CONTROLS EQU 0x0000401E
+VMCS_CTRL_PLE_GAP                               EQU 0x00004020
+VMCS_CTRL_PLE_WINDOW                            EQU 0x00004022
+
+; ------------------------------------------------------------------------------
+; 32-Bit Read-Only Data Fields (VM-Exit Information)
+; ------------------------------------------------------------------------------
+VMCS_VM_INSTRUCTION_ERROR                       EQU 0x00004400
+VMCS_EXIT_REASON                                EQU 0x00004402
+VMCS_VMEXIT_INTERRUPTION_INFORMATION            EQU 0x00004404
+VMCS_VMEXIT_INTERRUPTION_ERROR_CODE             EQU 0x00004406
+VMCS_IDT_VECTORING_INFORMATION                  EQU 0x00004408
+VMCS_IDT_VECTORING_ERROR_CODE                   EQU 0x0000440A
+VMCS_VMEXIT_INSTRUCTION_LENGTH                  EQU 0x0000440C
+VMCS_VMEXIT_INSTRUCTION_INFO                    EQU 0x0000440E
+
+; ------------------------------------------------------------------------------
+; 32-Bit Guest State Fields (Segment Limits)
+; ------------------------------------------------------------------------------
+VMCS_GUEST_ES_LIMIT                             EQU 0x00004800
+VMCS_GUEST_CS_LIMIT                             EQU 0x00004802
+VMCS_GUEST_SS_LIMIT                             EQU 0x00004804
+VMCS_GUEST_DS_LIMIT                             EQU 0x00004806
+VMCS_GUEST_FS_LIMIT                             EQU 0x00004808
+
+
+; ==============================================================================
+; INTEL VMCS COMPONENT ENCODING DEFINITIONS (PART 4)
+; ==============================================================================
+
+; ------------------------------------------------------------------------------
+; 32-Bit Guest & Host State Fields
+; ------------------------------------------------------------------------------
+VMCS_GUEST_LDTR_ACCESS_RIGHTS           EQU 0x00004820
+VMCS_GUEST_TR_ACCESS_RIGHTS             EQU 0x00004822
+VMCS_GUEST_INTERRUPTIBILITY_STATE       EQU 0x00004824
+VMCS_GUEST_ACTIVITY_STATE               EQU 0x00004826
+VMCS_GUEST_SMBASE                       EQU 0x00004828
+VMCS_GUEST_SYSENTER_CS                  EQU 0x0000482A
+VMCS_GUEST_VMX_PREEMPTION_TIMER_VALUE   EQU 0x0000482E
+VMCS_HOST_SYSENTER_CS                   EQU 0x00004C00
+
+; ------------------------------------------------------------------------------
+; Natural Width Control Fields
+; ------------------------------------------------------------------------------
+VMCS_CTRL_CR0_GUEST_HOST_MASK           EQU 0x00006000
+VMCS_CTRL_CR4_GUEST_HOST_MASK           EQU 0x00006002
+VMCS_CTRL_CR0_READ_SHADOW               EQU 0x00006004
+VMCS_CTRL_CR4_READ_SHADOW               EQU 0x00006006
+VMCS_CTRL_CR3_TARGET_VALUE_0            EQU 0x00006008
+VMCS_CTRL_CR3_TARGET_VALUE_1            EQU 0x0000600A
+VMCS_CTRL_CR3_TARGET_VALUE_2            EQU 0x0000600C
+VMCS_CTRL_CR3_TARGET_VALUE_3            EQU 0x0000600E
+
+; ------------------------------------------------------------------------------
+; Natural Width Read-Only Data Fields (VM-Exit Information)
+; ------------------------------------------------------------------------------
+VMCS_EXIT_QUALIFICATION                 EQU 0x00006400
+VMCS_VMEXIT_IO_RCX                      EQU 0x00006402
+VMCS_VMEXIT_IO_RSX                      EQU 0x00006404
+VMCS_VMEXIT_IO_RDI                      EQU 0x00006406
+VMCS_VMEXIT_IO_RIP                      EQU 0x00006408
+VMCS_EXIT_GUEST_LINEAR_ADDRESS          EQU 0x0000640A
+
+; ------------------------------------------------------------------------------
+; Natural Width Guest State Fields (Bases & Registers)
+; ------------------------------------------------------------------------------
+VMCS_GUEST_CR0                          EQU 0x00006800
+VMCS_GUEST_CR3                          EQU 0x00006802
+VMCS_GUEST_CR4                          EQU 0x00006804
+VMCS_GUEST_ES_BASE                      EQU 0x00006806
+VMCS_GUEST_CS_BASE                      EQU 0x00006808
+VMCS_GUEST_SS_BASE                      EQU 0x0000680A
+VMCS_GUEST_DS_BASE                      EQU 0x0000680C
+VMCS_GUEST_FS_BASE                      EQU 0x0000680E
+VMCS_GUEST_GS_BASE                      EQU 0x00006810
+VMCS_GUEST_LDTR_BASE                    EQU 0x00006812
+
+
+; ==============================================================================
+; INTEL VMCS COMPONENT ENCODING DEFINITIONS (PART 5)
+; ==============================================================================
+
+; ------------------------------------------------------------------------------
+; Natural Width Guest State Fields (Remaining Bases & Registers)
+; ------------------------------------------------------------------------------
+VMCS_GUEST_TR_BASE                      EQU 0x00006814
+VMCS_GUEST_GDTR_BASE                    EQU 0x00006816
+VMCS_GUEST_IDTR_BASE                    EQU 0x00006818
+VMCS_GUEST_DR7                          EQU 0x0000681A
+VMCS_GUEST_RSP                          EQU 0x0000681C
+VMCS_GUEST_RIP                          EQU 0x0000681E
+VMCS_GUEST_RFLAGS                       EQU 0x00006820
+VMCS_GUEST_PENDING_DEBUG_EXCEPTIONS     EQU 0x00006822
+VMCS_GUEST_SYSENTER_ESP                 EQU 0x00006824
+VMCS_GUEST_SYSENTER_EIP                 EQU 0x00006826
+
+; ------------------------------------------------------------------------------
+; Natural Width Host State Fields (Registers & Stack)
+; ------------------------------------------------------------------------------
+VMCS_HOST_CR0                           EQU 0x00006C00
+VMCS_HOST_CR3                           EQU 0x00006C02
+VMCS_HOST_CR4                           EQU 0x00006C04
+VMCS_HOST_FS_BASE                       EQU 0x00006C06
+VMCS_HOST_GS_BASE                       EQU 0x00006C08
+VMCS_HOST_TR_BASE                       EQU 0x00006C0A
+VMCS_HOST_GDTR_BASE                     EQU 0x00006C0C
+VMCS_HOST_IDTR_BASE                     EQU 0x00006C0E
+VMCS_HOST_SYSENTER_ESP                  EQU 0x00006C10
+VMCS_HOST_SYSENTER_EIP                  EQU 0x00006C12
+VMCS_HOST_RSP                           EQU 0x00006C14
+VMCS_HOST_RIP                           EQU 0x00006C16
+
+;Intel sensors physics:
+
+; ============================================================================
+; THERMAL AND TEMPERATURE SENSORS
+; ============================================================================
+
+IA32_THERM_STATUS           equ 0x19C   ; Core-level digital thermal sensor
+                                        ; Bits 22:16 = Temperature delta below TjMax
+                                        ; Bit 31     = Valid bit (Must be 1 to trust read)
+
+IA32_PACKAGE_THERM_STATUS   equ 0x1B1   ; Package-level digital thermal sensor
+                                        ; Reports the hottest temperature on the whole die
+                                        ; Bits 22:16 = Package temperature delta below TjMax
+
+MSR_TEMPERATURE_TARGET      equ 0x1A2   ; Factory absolute reference values
+                                        ; Bits 23:16 = TjMax (Maximum allowable temperature)
+                                        ; Use formula: True_Temp = TjMax - Delta
+
+; ============================================================================
+; HARDWARE THROTTLING AND CRISIS INDICATORS
+; ============================================================================
+
+IA32_THERM_INTERRUPT        equ 0x19B   ; Controls hardware thermal thresholds
+                                        ; Bit 0  = High-temperature interrupt enable
+                                        ; Bit 2  = Critical temperature interrupt enable
+
+MSR_THERM2_CTL              equ 0x19D   ; Hardware Clock Modulation Control
+                                        ; If a rootkit tries to bypass your scheduler by forcing 
+                                        ; clock modulation to hide its cycles, reading this reveals it.
+; ============================================================================
+; EXTENDED POWER AND ELECTRICAL LIMITS
+; ============================================================================
+
+MSR_PKG_POWER_LIMIT         equ 0x610   ; Controls average sustainable power levels (PL1 and PL2)
+                                        ; Bit 63 = Clamp lock (Flipping this to 1 makes the limits 
+                                        ; unchangeable until a cold motherboard reset!)
+
+MSR_PP0_ENERGY_STATUS       equ 0x639   ; Energy consumption specifically for the CPU Cores
+                                        ; (Combine this with MSR_PKG_ENERGY_STATUS [0x611] to isolate 
+                                        ; exactly how much power the uncore vs the cores are draining).
+; ============================================================================
+; SILICON-LEVEL SECURITY AND MITIGATION STATUS
+; ============================================================================
+
+IA32_ARCH_CAPABILITIES      equ 0x10A   ; Enumerates hardware-level vulnerabilities (Read-Only)
+                                        ; Bit 0  = RDCL_NO (If 1, the CPU is immune to Rogue Data Cache Load)
+                                        ; Bit 2  = RSBA_NO (Immune to speculative branch exploits)
+
+IA32_SPEC_CTRL              equ 0x48    ; Speculative Execution Controls (Indirect Branch Controls)
+                                        ; Bit 0  = IBRS (Indirect Branch Restricted Speculation)
+                                        ; Bit 1  = STIBP (Single Thread Indirect Branch Predictor)
+                                        ; Your Hypervisor will lock this to prevent cross-core leakage!
+
+IA32_THERM_CONTROL          equ 0x19A   ; Software clock modulation control
+                                        ; If a malicious driver tries to intentionally stall or 
+                                        ; simulate an hardware choke to manipulate your AI's timeline,
+                                        ; checking this register exposes if duty cycling is being forced.
+
+IA32_MISC_ENABLE            equ 0x1A0   ; Master processor feature toggles
+                                        ; Bit 16 = Enhanced Intel SpeedStep technology enable.
+                                        ; Bit 38 = Turbo Mode Disable.
+                                        ; If a rootkit tries to over-clock the CPU to intentionally 
+                                        ; step past your temperature threshold tracking, it will modify this.
+
+IA32_TSC_DEADLINE           equ 0x6E0   ; Local APIC high-precision timer deadline
+                                        ; Your scheduler can use this to guarantee your AI core 
+                                        ; wakes up exactly when it needs to, independent of the 
+                                        ; main core's instruction pipeline.
+; ============================================================================
+; INTEL CORE TELEMETRY DEFINITIONS
+; ============================================================================
+
+IA32_PERF_STATUS            equ 0x198   ; Performance and Voltage Status Register (Read-Only)
+                                        ; Bits 15:0  = Current Frequency Multiplier (P-State)
+                                        ; Bits 47:32 = Voltage Identification (VID) target
+
+MSR_VR_CURRENT_CONFIG       equ 0x601   ; Voltage Regulator Current Configuration (PL4)
+                                        ; Bits 12:0  = Current Limit (IccMax) in 1/8 A steps
+                                        ; Bit 31     = LOCK BIT (If 1, register is write-locked)
+
+; ============================================================================
+; FIXED-FUNCTION ARCHITECTURAL PERFORMANCE COUNTERS
+; ============================================================================
+
+IA32_FIXED_CTR_CTRL         equ 0x38D   ; Controls Fixed Counter operating rings
+                                        ; Your Hypervisor will use this to enable counting 
+                                        ; specifically for Ring 1, 2, and 3 code execution.
+
+IA32_FIXED_CTR0             equ 0x309   ; Counts: INSTR_RETIRED.ANY
+                                        ; Increments every single time an instruction finishes 
+                                        ; executing completely and safely.
+
+IA32_FIXED_CTR1             equ 0x30A   ; Counts: CPU_CLK_UNHALTED.CORE
+                                        ; Tracks actual core clock cycles spent processing.
+                                        ; Form: CTR0 / CTR1 = Exact real-time IPC (Instructions Per Cycle).
+
+; ============================================================================
+; UNCORE AND COMPONENT ENERGY DOMAINS
+; ============================================================================
+
+MSR_DRAM_ENERGY_STATUS      equ 0x619   ; Continuous energy consumption ticker for RAM
+                                        ; Measures electrical draw of the memory chips in Joules.
+                                        ; If an attacker rapidly charges rows to flip bits, 
+                                        ; this counter spikes immediately.
+
+; ============================================================================
+; MACHINE CHECK ARCHITECTURE (MCA) TELEMETRY
+; ============================================================================
+
+IA32_MCG_STATUS             equ 0x17A   ; Global Machine Check Status Register
+                                        ; Bit 1 = EIPV (Error IP Valid: holds the exact instruction 
+                                        ;         address that caused the physical panic).
+                                        ; Bit 2 = MCIP (Machine Check In Progress status marker).
+
+; ==============================================================================
+; INTEL UNCORE PERFORMANCE MONITORING MSR DEFINITIONS (64-BIT)
+; ==============================================================================
+
+; ------------------------------------------------------------------------------
+; SECTION: Uncore Arbiter Unit (ARB) MSRs
+; ------------------------------------------------------------------------------
+MSR_UNC_ARB_PERFCTR0                    EQU 0x000003B0  ; Uncore Arbiter Performance Counter 0 (R/W)
+MSR_UNC_ARB_PERFCTR1                    EQU 0x000003B1  ; Uncore Arbiter Performance Counter 1 (R/W)
+MSR_UNC_ARB_PERFEVTSEL0                 EQU 0x000003B2  ; Uncore Arbiter Counter 0 Event Select MSR (R/W)
+MSR_UNC_ARB_PERFEVTSEL1                 EQU 0x000003B3  ; Uncore Arbiter Counter 1 Event Select MSR (R/W)
+
+; ------------------------------------------------------------------------------
+; SECTION: Uncore C-Box 0 (CBO 0) MSRs
+; ------------------------------------------------------------------------------
+MSR_UNC_CBO_0_PERFEVTSEL0               EQU 0x00000700  ; Uncore C-Box 0 Counter 0 Event Select MSR (R/W)
+MSR_UNC_CBO_0_PERFEVTSEL1               EQU 0x00000701  ; Uncore C-Box 0 Counter 1 Event Select MSR (R/W)
+MSR_UNC_CBO_0_PERFEVTSEL2               EQU 0x00000702  ; Uncore C-Box 0 Counter 2 Event Select MSR (R/W)
+MSR_UNC_CBO_0_PERFEVTSEL3               EQU 0x00000703  ; Uncore C-Box 0 Counter 3 Event Select MSR (R/W)
+MSR_UNC_CBO_0_UNIT_STATUS               EQU 0x00000705  ; Uncore C-Box 0 Unit Status for Counters 0-3 (R/O)
+MSR_UNC_CBO_0_PERFCTR0                  EQU 0x00000706  ; Uncore C-Box 0 Performance Counter 0 (R/W)
+MSR_UNC_CBO_0_PERFCTR1                  EQU 0x00000707  ; Uncore C-Box 0 Performance Counter 1 (R/W)
+MSR_UNC_CBO_0_PERFCTR2                  EQU 0x00000708  ; Uncore C-Box 0 Performance Counter 2 (R/W)
+MSR_UNC_CBO_0_PERFCTR3                  EQU 0x00000709  ; Uncore C-Box 0 Performance Counter 3 (R/W)
+EQU 0x00000709
+
+; ------------------------------------------------------------------------------
+; SECTION: Uncore C-Box 1 (CBO 1) MSRs
+; ------------------------------------------------------------------------------
+MSR_UNC_CBO_1_PERFEVTSEL0               EQU 0x00000710  ; Uncore C-Box 1 Counter 0 Event Select MSR (R/W)
+MSR_UNC_CBO_1_PERFEVTSEL1               EQU 0x00000711  ; Uncore C-Box 1 Counter 1 Event Select MSR (R/W)
+MSR_UNC_CBO_1_PERFEVTSEL2               EQU 0x00000712  ; Uncore C-Box 1 Counter 2 Event Select MSR (R/W)
+MSR_UNC_CBO_1_PERFEVTSEL3               EQU 0x00000713  ; Uncore C-Box 1 Counter 3 Event Select MSR (R/W)
+MSR_UNC_CBO_1_UNIT_STATUS               EQU 0x00000715  ; Uncore C-Box 1 Unit Status for Counters 0-3 (R/O)
+MSR_UNC_CBO_1_PERFCTR0                  EQU 0x00000716  ; Uncore C-Box 1 Performance Counter 0 (R/W)
+MSR_UNC_CBO_1_PERFCTR1                  EQU 0x00000717  ; Uncore C-Box 1 Performance Counter 1 (R/W)
+MSR_UNC_CBO_1_PERFCTR2                  EQU 0x00000718  ; Uncore C-Box 1 Performance Counter 2 (R/W)
+MSR_UNC_CBO_1_PERFCTR3                  EQU 0x00000719  ; Uncore C-Box 1 Performance Counter 3 (R/W)
+
+; ------------------------------------------------------------------------------
+; SECTION: Uncore C-Box 2 (CBO 2) MSRs
+; ------------------------------------------------------------------------------
+MSR_UNC_CBO_2_PERFEVTSEL0               EQU 0x00000720  ; Uncore C-Box 2 Counter 0 Event Select MSR (R/W)
+MSR_UNC_CBO_2_PERFEVTSEL1               EQU 0x00000721  ; Uncore C-Box 2 Counter 1 Event Select MSR (R/W)
+MSR_UNC_CBO_2_PERFEVTSEL2               EQU 0x00000722  ; Uncore C-Box 2 Counter 2 Event Select MSR (R/W)
+MSR_UNC_CBO_2_PERFEVTSEL3               EQU 0x00000723  ; Uncore C-Box 2 Counter 3 Event Select MSR (R/W)
+MSR_UNC_CBO_2_UNIT_STATUS               EQU 0x00000725  ; Uncore C-Box 2 Unit Status for Counters 0-3 (R/O)
+MSR_UNC_CBO_2_PERFCTR0                  EQU 0x00000726  ; Uncore C-Box 2 Performance Counter 0 (R/W)
+MSR_UNC_CBO_2_PERFCTR1                  EQU 0x00000727  ; Uncore C-Box 2 Performance Counter 1 (R/W)
+
+; ------------------------------------------------------------------------------
+; SECTION: Uncore C-Box 3 (CBO 3) MSRs (Partial)
+; ------------------------------------------------------------------------------
+MSR_UNC_CBO_3_PERFCTR2                  EQU 0x00000728  ; Uncore C-Box 3 Performance Counter 2 (R/W)
+MSR_UNC_CBO_3_PERFCTR3                  EQU 0x00000729  ; Uncore C-Box 3 Performance Counter 3 (R/W)
+
+; ------------------------------------------------------------------------------
+; SECTION: Uncore C-Box 3 (CBO 3) MSRs (Complete)
+; ------------------------------------------------------------------------------
+MSR_UNC_CBO_3_PERFEVTSEL0               EQU 0x00000730  ; Uncore C-Box 3 Counter 0 Event Select MSR (R/W)
+MSR_UNC_CBO_3_PERFEVTSEL1               EQU 0x00000731  ; Uncore C-Box 3 Counter 1 Event Select MSR (R/W)
+MSR_UNC_CBO_3_PERFEVTSEL2               EQU 0x00000732  ; Uncore C-Box 3 Counter 2 Event Select MSR (R/W)
+MSR_UNC_CBO_3_PERFEVTSEL3               EQU 0x00000733  ; Uncore C-Box 3 Counter 3 Event Select MSR (R/W)
+MSR_UNC_CBO_3_UNIT_STATUS               EQU 0x00000735  ; Uncore C-Box 3 Unit Status for Counters 0-3 (R/O)
+MSR_UNC_CBO_3_PERFCTR0                  EQU 0x00000736  ; Uncore C-Box 3 Performance Counter 0 (R/W)
+MSR_UNC_CBO_3_PERFCTR1                  EQU 0x00000737  ; Uncore C-Box 3 Performance Counter 1 (R/W)
+MSR_UNC_CBO_3_PERFCTR2                  EQU 0x00000738  ; Uncore C-Box 3 Performance Counter 2 (R/W)
+MSR_UNC_CBO_3_PERFCTR3                  EQU 0x00000739  ; Uncore C-Box 3 Performance Counter 3 (R/W)
+; ------------------------------------------------------------------------------
+; SECTION: Uncore C-Box 4 (CBO 4) MSRs
+; ------------------------------------------------------------------------------
+MSR_UNC_CBO_4_PERFEVTSEL0               EQU 0x00000740  ; Uncore C-Box 4 Counter 0 Event Select MSR (R/W)
+MSR_UNC_CBO_4_PERFEVTSEL1               EQU 0x00000741  ; Uncore C-Box 4 Counter 1 Event Select MSR (R/W)
+MSR_UNC_CBO_4_PERFEVTSEL2               EQU 0x00000742  ; Uncore C-Box 4 Counter 2 Event Select MSR (R/W)
+MSR_UNC_CBO_4_PERFEVTSEL3               EQU 0x00000743  ; Uncore C-Box 4 Counter 3 Event Select MSR (R/W)
+MSR_UNC_CBO_4_UNIT_STATUS               EQU 0x00000745  ; Uncore C-Box 4 Unit Status for Counters 0-3 (R/O)
+MSR_UNC_CBO_4_PERFCTR0                  EQU 0x00000746  ; Uncore C-Box 4 Performance Counter 0 (R/W)
+MSR_UNC_CBO_4_PERFCTR1                  EQU 0x00000747  ; Uncore C-Box 4 Performance Counter 1 (R/W)
+MSR_UNC_CBO_4_PERFCTR2                  EQU 0x00000748  ; Uncore C-Box 4 Performance Counter 2 (R/W)
+MSR_UNC_CBO_4_PERFCTR3                  EQU 0x00000749  ; Uncore C-Box 4 Performance Counter 3 (R/W)
+
+; ==============================================================================
+; INTEL RAPL (POWER & ENERGY MANAGEMENT) MSR DEFINITIONS (64-BIT)
+; ==============================================================================
+
+; ------------------------------------------------------------------------------
+; SECTION: PP0 RAPL Domain MSRs (Primary Processor Plane - Usually Core/Graphics)
+; ------------------------------------------------------------------------------
+MSR_PP0_ENERGY_STATUS                   EQU 0x00000639  ; PP0 Energy Status Counter (R/O)
+MSR_PP0_POLICY                          EQU 0x0000063A  ; PP0 Balance Policy Control (R/W)
+
+; ------------------------------------------------------------------------------
+; SECTION: PP1 RAPL Domain MSRs (Secondary Processor Plane - Architecture Specific)
+; ------------------------------------------------------------------------------
+MSR_PP1_POWER_LIMIT                     EQU 0x00000640  ; PP1 RAPL Power Limit Control (R/W)
+MSR_PP1_ENERGY_STATUS                   EQU 0x00000641  ; PP1 Energy Status Counter (R/O)
+MSR_PP1_POLICY                          EQU 0x00000642  ; PP1 Balance Policy Control (R/W)
+
+; ==============================================================================
+; INTEL CORE, THERMAL, PERFORMANCE & POWER MSR DEFINITIONS (64-BIT)
+; ==============================================================================
+
+; ------------------------------------------------------------------------------
+; SECTION: BIOS Update MSRs
+; ------------------------------------------------------------------------------
+IA32_BIOS_UPDT_TRIG                     EQU 0x00000079  ; BIOS Update Trigger Register (W/O - Write Only) [Core]
+IA32_BIOS_SIGN_ID                       EQU 0x0000008B  ; BIOS Update Signature ID Register (R/W) [Thread]
+
+; ------------------------------------------------------------------------------
+; SECTION: Thread-Level Architectural Performance Counters (PMC)
+; ------------------------------------------------------------------------------
+IA32_PMC0                               EQU 0x000000C1  ; Performance Counter Register 0 (R/W) [Thread]
+IA32_PMC1                               EQU 0x000000C2  ; Performance Counter Register 1 (R/W) [Thread]
+IA32_PMC2                               EQU 0x000000C3  ; Performance Counter Register 2 (R/W) [Thread]
+IA32_PMC3                               EQU 0x000000C4  ; Performance Counter Register 3 (R/W) [Thread]
+
+; ------------------------------------------------------------------------------
+; SECTION: Core-Level Performance Counters (Available if Hyper-Threading is disabled)
+; ------------------------------------------------------------------------------
+IA32_PMC4                               EQU 0x000000C5  ; Performance Counter Register 4 (R/W) [Core]
+IA32_PMC5                               EQU 0x000000C6  ; Performance Counter Register 5 (R/W) [Core]
+IA32_PMC6                               EQU 0x000000C7  ; Performance Counter Register 6 (R/W) [Core]
+IA32_PMC7                               EQU 0x000000C8  ; Performance Counter Register 7 (R/W) [Core]
+
+; ------------------------------------------------------------------------------
+; SECTION: Core-Level Thermal & Interrupt Control
+; ------------------------------------------------------------------------------
+IA32_THERM_INTERRUPT                    EQU 0x0000019B  ; Thermal Interrupt Control Register (R/W) [Core]
+IA32_THERM_STATUS                       EQU 0x0000019C  ; Thermal Monitor Status Register (R/W) [Core]
+
+; ------------------------------------------------------------------------------
+; SECTION: Offcore & Execution Filtering MSRs
+; ------------------------------------------------------------------------------
+MSR_OFFCORE_RSP_0                       EQU 0x000001A6  ; Offcore Response Event Select Register 0 (R/W) [Thread]
+MSR_OFFCORE_RSP_1                       EQU 0x000001A7  ; Offcore Response Event Select Register 1 (R/W) [Thread]
+MSR_MISC_PWR_MGMT                       EQU 0x000001AA  ; Miscellaneous Power Management Control (R/W) [Core]
+MSR_LBR_SELECT                          EQU 0x000001C8  ; Last Branch Record Filtering Select Register (R/W) [Thread]
+
+; ------------------------------------------------------------------------------
+; SECTION: Package-Level Thermal & Energy Management
+; ------------------------------------------------------------------------------
+IA32_ENERGY_PERF_BIAS                   EQU 0x000001B0  ; Energy Performance Bias Control (R/W) [Package]
+IA32_PACKAGE_THERM_STATUS               EQU 0x000001B1  ; Package Thermal Status Register (R/O) [Package]
+IA32_PACKAGE_THERM_INTERRUPT            EQU 0x000001B2  ; Package Thermal Interrupt Control (R/W) [Package]
+
+; ==============================================================================
+; INTEL DEBUG, MEMORY CONFIGURATION & PERFORMANCE MSR DEFINITIONS (64-BIT)
+; ==============================================================================
+
+; ------------------------------------------------------------------------------
+; SECTION: Last Branch Record (LBR) & Debug Control MSRs
+; ------------------------------------------------------------------------------
+MSR_LASTBRANCH_TOS                      EQU 0x000001C9  ; Last Branch Record Stack TOS (R/W) [Thread]
+IA32_DEBUGCTL                           EQU 0x000001D9  ; Debug Control Register (R/W) [Thread]
+MSR_LER_FROM_LIP                        EQU 0x000001DD  ; Last Exception Record From Linear IP (R/W) [Thread]
+MSR_LER_TO_LIP                          EQU 0x000001DE  ; Last Exception Record To Linear IP (R/W) [Thread]
+
+; ------------------------------------------------------------------------------
+; SECTION: SMM Range Registers (SMRR) - SMM Protection
+; ------------------------------------------------------------------------------
+IA32_SMRR_PHYSBASE                      EQU 0x000001F2  ; SMM Range Physical Base Register (R/W Protection) [Core]
+IA32_SMRR_PHYSMASK                      EQU 0x000001F3  ; SMM Range Physical Mask Register (R/W Protection) [Core]
+MSR_POWER_CTL                           EQU 0x000001FC  ; Power Control Register (R/W) [Core]
+
+; ------------------------------------------------------------------------------
+; SECTION: Variable Range Memory Type Range Registers (MTRRs)
+; ------------------------------------------------------------------------------
+IA32_MTRR_PHYSBASE0                     EQU 0x00000200  ; Variable MTRR Base 0 (R/W) [Thread]
+IA32_MTRR_PHYSMASK0                     EQU 0x00000201  ; Variable MTRR Mask 0 (R/W) [Thread]
+IA32_MTRR_PHYSBASE1                     EQU 0x00000202  ; Variable MTRR Base 1 (R/W) [Thread]
+IA32_MTRR_PHYSMASK1                     EQU 0x00000203  ; Variable MTRR Mask 1 (R/W) [Thread]
+IA32_MTRR_PHYSBASE2                     EQU 0x00000204  ; Variable MTRR Base 2 (R/W) [Thread]
+IA32_MTRR_PHYSMASK2                     EQU 0x00000205  ; Variable MTRR Mask 2 (R/W) [Thread]
+IA32_MTRR_PHYSBASE3                     EQU 0x00000206  ; Variable MTRR Base 3 (R/W) [Thread]
+IA32_MTRR_PHYSMASK3                     EQU 0x00000207  ; Variable MTRR Mask 3 (R/W) [Thread]
+IA32_MTRR_PHYSBASE4                     EQU 0x00000208  ; Variable MTRR Base 4 (R/W) [Thread]
+IA32_MTRR_PHYSMASK4                     EQU 0x00000209  ; Variable MTRR Mask 4 (R/W) [Thread]
+IA32_MTRR_PHYSBASE5                     EQU 0x0000020A  ; Variable MTRR Base 5 (R/W) [Thread]
+IA32_MTRR_PHYSMASK5                     EQU 0x0000020B  ; Variable MTRR Mask 5 (R/W) [Thread]
+IA32_MTRR_PHYSBASE6                     EQU 0x0000020C  ; Variable MTRR Base 6 (R/W) [Thread]
+IA32_MTRR_PHYSMASK6                     EQU 0x0000020D  ; Variable MTRR Mask 6 (R/W) [Thread]
+IA32_MTRR_PHYSBASE7                     EQU 0x0000020E  ; Variable MTRR Base 7 (R/W) [Thread]
+IA32_MTRR_PHYSMASK7                     EQU 0x0000020F  ; Variable MTRR Mask 7 (R/W) [Thread]
+IA32_MTRR_PHYSBASE8                     EQU 0x00000210  ; Variable MTRR Base 8 (R/W) [Thread]
+IA32_MTRR_PHYSMASK8                     EQU 0x00000211  ; Variable MTRR Mask 8 (R/W) [Thread]
+IA32_MTRR_PHYSBASE9                     EQU 0x00000212  ; Variable MTRR Base 9 (R/W) [Thread]
+IA32_MTRR_PHYSMASK9                     EQU 0x00000213  ; Variable MTRR Mask 9 (R/W) [Thread]
+
+; ------------------------------------------------------------------------------
+; SECTION: Fixed Range Memory Type Range Registers (MTRRs)
+; ------------------------------------------------------------------------------
+IA32_MTRR_FIX64K_00000                  EQU 0x00000250  ; Fixed MTRR 64K Range (R/W) [Thread]
+IA32_MTRR_FIX16K_80000                  EQU 0x00000258  ; Fixed MTRR 16K Range (R/W) [Thread]
+IA32_MTRR_FIX16K_A0000                  EQU 0x00000259  ; Fixed MTRR 16K Range (R/W) [Thread]
+IA32_MTRR_FIX4K_C0000                   EQU 0x00000268  ; Fixed MTRR 4K Range (R/W) [Thread]
+IA32_MTRR_FIX4K_C8000                   EQU 0x00000269  ; Fixed MTRR 4K Range (R/W) [Thread]
+IA32_MTRR_FIX4K_D0000                   EQU 0x0000026A  ; Fixed MTRR 4K Range (R/W) [Thread]
+IA32_MTRR_FIX4K_D8000                   EQU 0x0000026B  ; Fixed MTRR 4K Range (R/W) [Thread]
+IA32_MTRR_FIX4K_E0000                   EQU 0x0000026C  ; Fixed MTRR 4K Range (R/W) [Thread]
+IA32_MTRR_FIX4K_E8000                   EQU 0x0000026D  ; Fixed MTRR 4K Range (R/W) [Thread]
+IA32_MTRR_FIX4K_F0000                   EQU 0x0000026E  ; Fixed MTRR 4K Range (R/W) [Thread]
+IA32_MTRR_FIX4K_F8000                   EQU 0x0000026F  ; Fixed MTRR 4K Range (R/W) [Thread]
+
+; ------------------------------------------------------------------------------
+; SECTION: Page Attribute Table & Machine Check MSRs
+; ------------------------------------------------------------------------------
+IA32_PAT                                EQU 0x00000277  ; Page Attribute Table Register (R/W) [Thread]
+IA32_MC0_CTL2                           EQU 0x00000280  ; Machine Check Error Control 0 (R/W) [Core]
+IA32_MC1_CTL2                           EQU 0x00000281  ; Machine Check Error Control 1 (R/W) [Core]
+IA32_MC2_CTL2                           EQU 0x00000282  ; Machine Check Error Control 2 (R/W) [Core]
+IA32_MC3_CTL2                           EQU 0x00000283  ; Machine Check Error Control 3 (R/W) [Core]
+IA32_MC4_CTL2                           EQU 0x00000284  ; Machine Check Error Control 4 (Always 0) [Package]
+IA32_MTRR_DEF_TYPE                      EQU 0x000002FF  ; Default Memory Type Control Register (R/W) [Thread]
+
+; ------------------------------------------------------------------------------
+; SECTION: Architectural Fixed Performance Counters & Capabilities
+; ------------------------------------------------------------------------------
+IA32_FIXED_CTR0                         EQU 0x00000309  ; Fixed Performance Counter 0 (R/W) [Thread]
+IA32_FIXED_CTR1                         EQU 0x0000030A  ; Fixed Performance Counter 1 (R/W) [Thread]
+IA32_FIXED_CTR2                         EQU 0x0000030B  ; Fixed Performance Counter 2 (R/W) [Thread]
+IA32_PERF_CAPABILITIES                  EQU 0x00000345  ; Performance Capabilities Enumeration (R/O) [Thread]
+
+; ==============================================================================
+; INTEL GLOBAL PERFORMANCE CONTROL & PEBS MSR DEFINITIONS (64-BIT)
+; ==============================================================================
+
+; ------------------------------------------------------------------------------
+; SECTION: Global Performance Counter Control Facilities
+; ------------------------------------------------------------------------------
+IA32_FIXED_CTR_CTRL                     EQU 0x0000038D  ; Fixed-Function-Counter Control Register (R/W) [Thread]
+IA32_PERF_GLOBAL_STATUS                 EQU 0x0000038E  ; Global Performance Counter Status Register (R/O - Read Only) [Thread]
+IA32_PERF_GLOBAL_CTRL                   EQU 0x0000038F  ; Global Performance Counter Control Register (R/W) [Thread]
+IA32_PERF_GLOBAL_OVF_CTRL               EQU 0x00000390  ; Global Performance Counter Overflow Control Register (R/W) [Thread]
+
+; ------------------------------------------------------------------------------
+; SECTION: Processor Event Based Sampling (PEBS) Facility
+; ------------------------------------------------------------------------------
+IA32_PEBS_ENABLE                        EQU 0x000003F1  ; Processor Event Based Sampling Enable Register (R/W) [Thread]
+
+; ==============================================================================
+; INTEL VMX, MACHINE CHECK & C-STATE RESIDENCY MSR DEFINITIONS (64-BIT)
+; ==============================================================================
+
+; ------------------------------------------------------------------------------
+; SECTION: C-State Residency Counters (R/O - Read Only)
+; ------------------------------------------------------------------------------
+MSR_PKG_C3_RESIDENCY                    EQU 0x000003F8  ; Package C3 Residency Counter [Package]
+MSR_PKG_C6_RESIDENCY                    EQU 0x000003F9  ; Package C6 Residency Counter [Package]
+MSR_PKG_C7_RESIDENCY                    EQU 0x000003FA  ; Package C7 Residency Counter [Package]
+MSR_CORE_C3_RESIDENCY                   EQU 0x000003FC  ; Core C3 Residency Counter [Core]
+MSR_CORE_C6_RESIDENCY                   EQU 0x000003FD  ; Core C6 Residency Counter [Core]
+MSR_CORE_C7_RESIDENCY                   EQU 0x000003FE  ; Core C7 Residency Counter [Core]
+
+; ------------------------------------------------------------------------------
+; SECTION: Machine Check Architecture (MCA) - Bank 0 to 4 MSRs
+; ------------------------------------------------------------------------------
+IA32_MC0_CTRL                           EQU 0x00000400  ; Error Signaling Control Bank 0 (R/W) [Core]
+IA32_MC0_STATUS                         EQU 0x00000401  ; Error Logging Status Bank 0 (R/W) [Core]
+IA32_MC0_ADDR                           EQU 0x00000402  ; Error Reporting Address Bank 0 (R/W) [Core]
+IA32_MC0_MISC                           EQU 0x00000403  ; Miscellaneous Error Info Bank 0 (R/W) [Core]
+
+IA32_MC1_CTRL                           EQU 0x00000404  ; Error Signaling Control Bank 1 (R/W) [Core]
+IA32_MC1_STATUS                         EQU 0x00000405  ; Error Logging Status Bank 1 (R/W) [Core]
+IA32_MC1_ADDR                           EQU 0x00000402  ; Error Reporting Address Bank 1 (R/W) [Core] ; Note: Verified from index 406H
+IA32_MC1_MISC                           EQU 0x00000407  ; Miscellaneous Error Info Bank 1 (R/W) [Core]
+
+IA32_MC2_CTRL                           EQU 0x00000408  ; Error Signaling Control Bank 2 (R/W) [Core]
+IA32_MC2_STATUS                         EQU 0x00000409  ; Error Logging Status Bank 2 (R/W) [Core]
+IA32_MC2_ADDR                           EQU 0x0000040A  ; Error Reporting Address Bank 2 (R/W) [Core]
+IA32_MC2_MISC                           EQU 0x0000040B  ; Miscellaneous Error Info Bank 2 (R/W) [Core]
+
+IA32_MC3_CTRL                           EQU 0x0000040C  ; Error Signaling Control Bank 3 (R/W) [Core]
+IA32_MC3_STATUS                         EQU 0x0000040D  ; Error Logging Status Bank 3 (R/W) [Core]
+IA32_MC3_ADDR                           EQU 0x0000040E  ; Error Reporting Address Bank 3 (R/W) [Core]
+IA32_MC3_MISC                           EQU 0x0000040F  ; Miscellaneous Error Info Bank 3 (R/W) [Core]
+
+IA32_MC4_CTRL                           EQU 0x00000410  ; PCU Error Signaling Control Bank 4 (R/W) [Core]
+IA32_MC4_STATUS                         EQU 0x00000411  ; PCU Error Logging Status Bank 4 (R/W) [Core]
+
+; ------------------------------------------------------------------------------
+; SECTION: VMX Capability Reporting MSRs (R/O - Read Only)
+; ------------------------------------------------------------------------------
+IA32_VMX_BASIC                          EQU 0x00000480  ; Basic VMX Capabilities [Thread]
+IA32_VMX_PINBASED_CTLS                  EQU 0x00000481  ; Pin-Based VM-Execution Controls [Thread]
+IA32_VMX_PROCBASED_CTLS                 EQU 0x00000482  ; Primary Processor-Based VM-Execution Controls [Thread]
+IA32_VMX_EXIT_CTLS                      EQU 0x00000483  ; VM-Exit Controls [Thread]
+IA32_VMX_ENTRY_CTLS                     EQU 0x00000484  ; VM-Entry Controls [Thread]
+IA32_VMX_MISC                           EQU 0x00000485  ; Miscellaneous VMX Capabilities [Thread]
+IA32_VMX_CR0_FIXED0                     EQU 0x00000486  ; CR0 Bits Fixed to 0 [Thread]
+IA32_VMX_CR0_FIXED1                     EQU 0x00000487  ; CR0 Bits Fixed to 1 [Thread]
+IA32_VMX_CR4_FIXED0                     EQU 0x00000488  ; CR4 Bits Fixed to 0 [Thread]
+IA32_VMX_CR4_FIXED1                     EQU 0x00000489  ; CR4 Bits Fixed to 1 [Thread]
+IA32_VMX_VMCS_ENUM                      EQU 0x0000048A  ; VMCS Field Enumeration [Thread]
+IA32_VMX_PROCBASED_CTLS2                EQU 0x0000048B  ; Secondary Processor-Based VM-Execution Controls [Thread]
+IA32_VMX_EPT_VPID_ENUM                  EQU 0x0000048C  ; EPT and VPID Capabilities [Thread]
+IA32_VMX_TRUE_PINBASED_CTLS             EQU 0x0000048D  ; Pin-Based VMX Flex Controls [Thread]
+IA32_VMX_TRUE_PROCBASED_CTLS            EQU 0x0000048E  ; Primary Processor-Based VMX Flex Controls [Thread]
+IA32_VMX_TRUE_EXIT_CTLS                 EQU 0x0000048F  ; VM-Exit VMX Flex Controls [Thread]
+IA32_VMX_TRUE_ENTRY_CTLS                EQU 0x00000490  ; VM-Entry VMX Flex Controls [Thread]
+
+; ------------------------------------------------------------------------------
+; SECTION: Alias Performance Counters & Debug Store
+; ------------------------------------------------------------------------------
+IA32_A_PMC0                             EQU 0x000004C1  ; Alias Performance Counter 0 (R/W) [Thread]
+IA32_A_PMC1                             EQU 0x000004C2  ; Alias Performance Counter 1 (R/W) [Thread]
+IA32_A_PMC2                             EQU 0x000004C3  ; Alias Performance Counter 2 (R/W) [Thread]
+IA32_A_PMC3                             EQU 0x000004C4  ; Alias Performance Counter 3 (R/W) [Thread]
+IA32_A_PMC4                             EQU 0x000004C5  ; Alias Performance Counter 4 (R/W) [Core]
+IA32_A_PMC5                             EQU 0x000004C6  ; Alias Performance Counter 5 (R/W) [Core]
+IA32_A_PMC6                             EQU 0x000004C7  ; Alias Performance Counter 6 (R/W) [Core]
+IA32_A_PMC7                             EQU 0x000004C8  ; Alias Performance Counter 7 (R/W) [Core]
+IA32_DS_AREA                            EQU 0x00000600  ; Debug Store Save Area Base Address (R/W) [Thread]
+MSR_RAPL_POWER_UNIT                     EQU 0x00000606  ; RAPL Unit Multipliers (R/O) [Package]
+MSR_PKGC3_IRTL                          EQU 0x0000060A  ; Package C3 Interrupt Response Limit (R/W) [Package]
+
+; ==============================================================================
+; INTEL RAPL, LBR STACK, TSC DEADLINE & X2APIC MSR DEFINITIONS (64-BIT)
+; ==============================================================================
+
+; ------------------------------------------------------------------------------
+; SECTION: Package & PP0 RAPL Domain MSRs
+; ------------------------------------------------------------------------------
+MSR_PKG_ENERGY_STATUS                   EQU 0x00000611  ; Package Energy Status Counter (R/O) [Package]
+MSR_PKG_POWER_INFO                      EQU 0x00000614  ; Package RAPL Parameter Limits (R/W) [Package]
+MSR_PP0_POWER_LIMIT                     EQU 0x00000638  ; PP0 RAPL Power Limit Control (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Last Branch Record (LBR) Stack - Source Pointers (FROM_IP)
+; ------------------------------------------------------------------------------
+MSR_LASTBRANCH_0_FROM_IP                EQU 0x00000680  ; Last Branch Record 0 From IP (R/W) [Thread]
+MSR_LASTBRANCH_1_FROM_IP                EQU 0x00000681  ; Last Branch Record 1 From IP (R/W) [Thread]
+MSR_LASTBRANCH_2_FROM_IP                EQU 0x00000682  ; Last Branch Record 2 From IP (R/W) [Thread]
+MSR_LASTBRANCH_3_FROM_IP                EQU 0x00000683  ; Last Branch Record 3 From IP (R/W) [Thread]
+MSR_LASTBRANCH_4_FROM_IP                EQU 0x00000684  ; Last Branch Record 4 From IP (R/W) [Thread]
+MSR_LASTBRANCH_5_FROM_IP                EQU 0x00000685  ; Last Branch Record 5 From IP (R/W) [Thread]
+MSR_LASTBRANCH_6_FROM_IP                EQU 0x00000686  ; Last Branch Record 6 From IP (R/W) [Thread]
+MSR_LASTBRANCH_7_FROM_IP                EQU 0x00000687  ; Last Branch Record 7 From IP (R/W) [Thread]
+MSR_LASTBRANCH_8_FROM_IP                EQU 0x00000688  ; Last Branch Record 8 From IP (R/W) [Thread]
+MSR_LASTBRANCH_9_FROM_IP                EQU 0x00000689  ; Last Branch Record 9 From IP (R/W) [Thread]
+MSR_LASTBRANCH_10_FROM_IP               EQU 0x0000068A  ; Last Branch Record 10 From IP (R/W) [Thread]
+MSR_LASTBRANCH_11_FROM_IP               EQU 0x0000068B  ; Last Branch Record 11 From IP (R/W) [Thread]
+MSR_LASTBRANCH_12_FROM_IP               EQU 0x0000068C  ; Last Branch Record 12 From IP (R/W) [Thread]
+MSR_LASTBRANCH_13_FROM_IP               EQU 0x0000068D  ; Last Branch Record 13 From IP (R/W) [Thread]
+MSR_LASTBRANCH_14_FROM_IP               EQU 0x0000068E  ; Last Branch Record 14 From IP (R/W) [Thread]
+MSR_LASTBRANCH_15_FROM_IP               EQU 0x0000068F  ; Last Branch Record 15 From IP (R/W) [Thread]
+
+; ------------------------------------------------------------------------------
+; SECTION: Last Branch Record (LBR) Stack - Destination Pointers (TO_IP)
+; ------------------------------------------------------------------------------
+MSR_LASTBRANCH_0_TO_IP                  EQU 0x000006C0  ; Last Branch Record 0 To IP (R/W) [Thread]
+MSR_LASTBRANCH_1_TO_IP                  EQU 0x000006C1  ; Last Branch Record 1 To IP (R/W) [Thread]
+MSR_LASTBRANCH_2_TO_IP                  EQU 0x000006C2  ; Last Branch Record 2 To IP (R/W) [Thread]
+MSR_LASTBRANCH_3_TO_IP                  EQU 0x000006C3  ; Last Branch Record 3 To IP (R/W) [Thread]
+MSR_LASTBRANCH_4_TO_IP                  EQU 0x000006C4  ; Last Branch Record 4 To IP (R/W) [Thread]
+MSR_LASTBRANCH_5_TO_IP                  EQU 0x000006C5  ; Last Branch Record 5 To IP (R/W) [Thread]
+MSR_LASTBRANCH_6_TO_IP                  EQU 0x000006C6  ; Last Branch Record 6 To IP (R/W) [Thread]
+MSR_LASTBRANCH_7_TO_IP                  EQU 0x000006C7  ; Last Branch Record 7 To IP (R/W) [Thread]
+MSR_LASTBRANCH_8_TO_IP                  EQU 0x000006C8  ; Last Branch Record 8 To IP (R/W) [Thread]
+MSR_LASTBRANCH_9_TO_IP                  EQU 0x000006C9  ; Last Branch Record 9 To IP (R/W) [Thread]
+MSR_LASTBRANCH_10_TO_IP                 EQU 0x000006CA  ; Last Branch Record 10 To IP (R/W) [Thread]
+MSR_LASTBRANCH_11_TO_IP                 EQU 0x000006CB  ; Last Branch Record 11 To IP (R/W) [Thread]
+MSR_LASTBRANCH_12_TO_IP                 EQU 0x000006CC  ; Last Branch Record 12 To IP (R/W) [Thread]
+MSR_LASTBRANCH_13_TO_IP                 EQU 0x000006CD  ; Last Branch Record 13 To IP (R/W) [Thread]
+MSR_LASTBRANCH_14_TO_IP                 EQU 0x000006CE  ; Last Branch Record 14 To IP (R/W) [Thread]
+MSR_LASTBRANCH_15_TO_IP                 EQU 0x000006CF  ; Last Branch Record 15 To IP (R/W) [Thread]
+
+; ------------------------------------------------------------------------------
+; SECTION: Local APIC Timer Extension
+; ------------------------------------------------------------------------------
+IA32_TSC_DEADLINE                       EQU 0x000006E0  ; TSC Deadline Timer Control Register (R/W) [Thread]
+
+; ------------------------------------------------------------------------------
+; SECTION: Intel x2APIC Architectural Interface Registers Mapped to MSRs
+; ------------------------------------------------------------------------------
+IA32_X2APIC_APICID                      EQU 0x00000802  ; x2APIC ID Register (R/O - Read Only)
+IA32_X2APIC_VERSION                     EQU 0x00000803  ; x2APIC Version Register (R/O)
+IA32_X2APIC_TPR                         EQU 0x00000808  ; x2APIC Task Priority Register (R/W)
+IA32_X2APIC_PPR                         EQU 0x0000080A  ; x2APIC Processor Priority Register (R/O)
+IA32_X2APIC_EOI                         EQU 0x0000080B  ; x2APIC End of Interrupt Register (W/O - Write Only)
+IA32_X2APIC_LDR                         EQU 0x0000080D  ; x2APIC Logical Destination Register (R/O)
+IA32_X2APIC_SIVR                        EQU 0x0000080F  ; x2APIC Spurious Interrupt Vector Register (R/W)
+
+; ------------------------------------------------------------------------------
+; SECTION: x2APIC In-Service Registers (ISR)
+; ------------------------------------------------------------------------------
+IA32_X2APIC_ISR0                        EQU 0x00000810  ; x2APIC In-Service Register Bits 31:0 (R/O)
+IA32_X2APIC_ISR1                        EQU 0x00000811  ; x2APIC In-Service Register Bits 63:32 (R/O)
+IA32_X2APIC_ISR2                        EQU 0x00000812  ; x2APIC In-Service Register Bits 95:64 (R/O)
+IA32_X2APIC_ISR3                        EQU 0x00000813  ; x2APIC In-Service Register Bits 127:96 (R/O)
+IA32_X2APIC_ISR4                        EQU 0x00000814  ; x2APIC In-Service Register Bits 159:128 (R/O)
+IA32_X2APIC_ISR5                        EQU 0x00000815  ; x2APIC In-Service Register Bits 191:160 (R/O)
+IA32_X2APIC_ISR6                        EQU 0x00000816  ; x2APIC In-Service Register Bits 223:192 (R/O)
+IA32_X2APIC_ISR7                        EQU 0x00000817  ; x2APIC In-Service Register Bits 255:224 (R/O)
+
+; ------------------------------------------------------------------------------
+; SECTION: x2APIC Trigger Mode Registers (TMR)
+; ------------------------------------------------------------------------------
+IA32_X2APIC_TMR0                        EQU 0x00000818  ; x2APIC Trigger Mode Register Bits 31:0 (R/O)
+IA32_X2APIC_TMR1                        EQU 0x00000819  ; x2APIC Trigger Mode Register Bits 63:32 (R/O)
+IA32_X2APIC_TMR2                        EQU 0x0000081A  ; x2APIC Trigger Mode Register Bits 95:64 (R/O)
+IA32_X2APIC_TMR3                        EQU 0x0000081B  ; x2APIC Trigger Mode Register Bits 127:96 (R/O)
+IA32_X2APIC_TMR4                        EQU 0x0000081C  ; x2APIC Trigger Mode Register Bits 159:128 (R/O)
+IA32_X2APIC_TMR5                        EQU 0x0000081D  ; x2APIC Trigger Mode Register Bits 191:160 (R/O)
+IA32_X2APIC_TMR6                        EQU 0x0000081E  ; x2APIC Trigger Mode Register Bits 223:192 (R/O)
+IA32_X2APIC_TMR7                        EQU 0x0000081F  ; x2APIC Trigger Mode Register Bits 255:224 (R/O)
+
+; ------------------------------------------------------------------------------
+; SECTION: x2APIC Interrupt Request Registers (IRR)
+; ------------------------------------------------------------------------------
+IA32_X2APIC_IRR0                        EQU 0x00000820  ; x2APIC Interrupt Request Register Bits 31:0 (R/O)
+IA32_X2APIC_IRR1                        EQU 0x00000821  ; x2APIC Interrupt Request Register Bits 63:32 (R/O)
+IA32_X2APIC_IRR2                        EQU 0x00000822  ; x2APIC Interrupt Request Register Bits 95:64 (R/O)
+IA32_X2APIC_IRR3                        EQU 0x00000823  ; x2APIC Interrupt Request Register Bits 127:96 (R/O)
+IA32_X2APIC_IRR4                        EQU 0x00000824  ; x2APIC Interrupt Request Register Bits 159:128 (R/O)
+IA32_X2APIC_IRR5                        EQU 0x00000825  ; x2APIC Interrupt Request Register Bits 191:160 (R/O)
+IA32_X2APIC_IRR6                        EQU 0x00000826  ; x2APIC Interrupt Request Register Bits 223:192 (R/O)
+
+; ==============================================================================
+; INTEL LBR, COMPLETE X2APIC, AND EXTENDED LONG MODE MSR DEFINITIONS (64-BIT)
+; ==============================================================================
+
+; ------------------------------------------------------------------------------
+; SECTION: Last Branch Record (LBR) Stack - Destination Pointers (TO_IP)
+; ------------------------------------------------------------------------------
+MSR_LASTBRANCH_0_TO_IP                  EQU 0x000006C0  ; Last Branch Record 0 To IP (R/W) [Thread]
+MSR_LASTBRANCH_1_TO_IP                  EQU 0x000006C1  ; Last Branch Record 1 To IP (R/W) [Thread]
+MSR_LASTBRANCH_2_TO_IP                  EQU 0x000006C2  ; Last Branch Record 2 To IP (R/W) [Thread]
+MSR_LASTBRANCH_3_TO_IP                  EQU 0x000006C3  ; Last Branch Record 3 To IP (R/W) [Thread]
+MSR_LASTBRANCH_4_TO_IP                  EQU 0x000006C4  ; Last Branch Record 4 To IP (R/W) [Thread]
+MSR_LASTBRANCH_5_TO_IP                  EQU 0x000006C5  ; Last Branch Record 5 To IP (R/W) [Thread]
+MSR_LASTBRANCH_6_TO_IP                  EQU 0x000006C6  ; Last Branch Record 6 To IP (R/W) [Thread]
+MSR_LASTBRANCH_7_TO_IP                  EQU 0x000006C7  ; Last Branch Record 7 To IP (R/W) [Thread]
+MSR_LASTBRANCH_8_TO_IP                  EQU 0x000006C8  ; Last Branch Record 8 To IP (R/W) [Thread]
+MSR_LASTBRANCH_9_TO_IP                  EQU 0x000006C9  ; Last Branch Record 9 To IP (R/W) [Thread]
+MSR_LASTBRANCH_10_TO_IP                 EQU 0x000006CA  ; Last Branch Record 10 To IP (R/W) [Thread]
+MSR_LASTBRANCH_11_TO_IP                 EQU 0x000006CB  ; Last Branch Record 11 To IP (R/W) [Thread]
+MSR_LASTBRANCH_12_TO_IP                 EQU 0x000006CC  ; Last Branch Record 12 To IP (R/W) [Thread]
+MSR_LASTBRANCH_13_TO_IP                 EQU 0x000006CD  ; Last Branch Record 13 To IP (R/W) [Thread]
+MSR_LASTBRANCH_14_TO_IP                 EQU 0x000006CE  ; Last Branch Record 14 To IP (R/W) [Thread]
+MSR_LASTBRANCH_15_TO_IP                 EQU 0x000006CF  ; Last Branch Record 15 To IP (R/W) [Thread]
+
+; ------------------------------------------------------------------------------
+; SECTION: Local APIC Timer Extension
+; ------------------------------------------------------------------------------
+IA32_TSC_DEADLINE                       EQU 0x000006E0  ; TSC Deadline Timer Control Register (R/W) [Thread]
+
+; ------------------------------------------------------------------------------
+; SECTION: Intel x2APIC Architectural Interface Mapped to MSRs
+; ------------------------------------------------------------------------------
+IA32_X2APIC_APICID                      EQU 0x00000802  ; x2APIC ID Register (R/O - Read Only)
+IA32_X2APIC_VERSION                     EQU 0x00000803  ; x2APIC Version Register (R/O)
+IA32_X2APIC_TPR                         EQU 0x00000808  ; x2APIC Task Priority Register (R/W)
+IA32_X2APIC_PPR                         EQU 0x0000080A  ; x2APIC Processor Priority Register (R/O)
+IA32_X2APIC_EOI                         EQU 0x0000080B  ; x2APIC End of Interrupt Register (W/O - Write Only)
+IA32_X2APIC_LDR                         EQU 0x0000080D  ; x2APIC Logical Destination Register (R/O)
+IA32_X2APIC_SIVR                        EQU 0x0000080F  ; x2APIC Spurious Interrupt Vector Register (R/W)
+
+; ------------------------------------------------------------------------------
+; SECTION: x2APIC In-Service Registers (ISR)
+; ------------------------------------------------------------------------------
+IA32_X2APIC_ISR0                        EQU 0x00000810  ; x2APIC In-Service Register Bits 31:0 (R/O)
+IA32_X2APIC_ISR1                        EQU 0x00000811  ; x2APIC In-Service Register Bits 63:32 (R/O)
+IA32_X2APIC_ISR2                        EQU 0x00000812  ; x2APIC In-Service Register Bits 95:64 (R/O)
+IA32_X2APIC_ISR3                        EQU 0x00000813  ; x2APIC In-Service Register Bits 127:96 (R/O)
+IA32_X2APIC_ISR4                        EQU 0x00000814  ; x2APIC In-Service Register Bits 159:128 (R/O)
+IA32_X2APIC_ISR5                        EQU 0x00000815  ; x2APIC In-Service Register Bits 191:160 (R/O)
+IA32_X2APIC_ISR6                        EQU 0x00000816  ; x2APIC In-Service Register Bits 223:192 (R/O)
+IA32_X2APIC_ISR7                        EQU 0x00000817  ; x2APIC In-Service Register Bits 255:224 (R/O)
+
+; ------------------------------------------------------------------------------
+; SECTION: x2APIC Trigger Mode Registers (TMR)
+; ------------------------------------------------------------------------------
+IA32_X2APIC_TMR0                        EQU 0x00000818  ; x2APIC Trigger Mode Register Bits 31:0 (R/O)
+IA32_X2APIC_TMR1                        EQU 0x00000819  ; x2APIC Trigger Mode Register Bits 63:32 (R/O)
+IA32_X2APIC_TMR2                        EQU 0x0000081A  ; x2APIC Trigger Mode Register Bits 95:64 (R/O)
+IA32_X2APIC_TMR3                        EQU 0x0000081B  ; x2APIC Trigger Mode Register Bits 127:96 (R/O)
+IA32_X2APIC_TMR4                        EQU 0x0000081C  ; x2APIC Trigger Mode Register Bits 159:128 (R/O)
+IA32_X2APIC_TMR5                        EQU 0x0000081D  ; x2APIC Trigger Mode Register Bits 191:160 (R/O)
+IA32_X2APIC_TMR6                        EQU 0x0000081E  ; x2APIC Trigger Mode Register Bits 223:192 (R/O)
+IA32_X2APIC_TMR7                        EQU 0x0000081F  ; x2APIC Trigger Mode Register Bits 255:224 (R/O)
+
+; ------------------------------------------------------------------------------
+; SECTION: x2APIC Interrupt Request Registers (IRR)
+; ------------------------------------------------------------------------------
+IA32_X2APIC_IRR0                        EQU 0x00000820  ; x2APIC Interrupt Request Register Bits 31:0 (R/O)
+IA32_X2APIC_IRR1                        EQU 0x00000821  ; x2APIC Interrupt Request Register Bits 63:32 (R/O)
+IA32_X2APIC_IRR2                        EQU 0x00000822  ; x2APIC Interrupt Request Register Bits 95:64 (R/O)
+IA32_X2APIC_IRR3                        EQU 0x00000823  ; x2APIC Interrupt Request Register Bits 127:96 (R/O)
+IA32_X2APIC_IRR4                        EQU 0x00000824  ; x2APIC Interrupt Request Register Bits 159:128 (R/O)
+IA32_X2APIC_IRR5                        EQU 0x00000825  ; x2APIC Interrupt Request Register Bits 191:160 (R/O)
+IA32_X2APIC_IRR6                        EQU 0x00000826  ; x2APIC Interrupt Request Register Bits 223:192 (R/O)
+IA32_X2APIC_IRR7                        EQU 0x00000827  ; x2APIC Interrupt Request Register Bits 255:224 (R/O)
+
+; ------------------------------------------------------------------------------
+; SECTION: x2APIC Control, LVT, Counter, and Command Registers
+; ------------------------------------------------------------------------------
+IA32_X2APIC_ESR                         EQU 0x00000828  ; x2APIC Error Status Register (R/W)
+IA32_X2APIC_LVT_CMCI                    EQU 0x0000082F  ; x2APIC LVT Corrected Machine Check Interrupt Register (R/W)
+IA32_X2APIC_ICR                         EQU 0x00000830  ; x2APIC Interrupt Command Register (R/W - 64-bit combined)
+IA32_X2APIC_LVT_TIMER                   EQU 0x00000832  ; x2APIC LVT Timer Interrupt Register (R/W)
+IA32_X2APIC_LVT_THERMAL                 EQU 0x00000833  ; x2APIC LVT Thermal Sensor Interrupt Register (R/W)
+IA32_X2APIC_LVT_PMI                     EQU 0x00000834  ; x2APIC LVT Performance Monitor Interrupt Register (R/W)
+IA32_X2APIC_LVT_LINT0                   EQU 0x00000835  ; x2APIC LVT LINT0 Register (R/W)
+IA32_X2APIC_LVT_LINT1                   EQU 0x00000836  ; x2APIC LVT LINT1 Register (R/W)
+IA32_X2APIC_LVT_ERROR                   EQU 0x00000837  ; x2APIC LVT Error Register (R/W)
+IA32_X2APIC_INIT_COUNT                  EQU 0x00000838  ; x2APIC Initial Count Register (R/W)
+IA32_X2APIC_CUR_COUNT                   EQU 0x00000839  ; x2APIC Current Count Register (R/O)
+IA32_X2APIC_DIV_CONF                    EQU 0x0000083E  ; x2APIC Divide Configuration Register (R/W)
+IA32_X2APIC_SELF_IPI                    EQU 0x0000083F  ; x2APIC Self IPI Register (W/O - Write Only)
+
+; ------------------------------------------------------------------------------
+; SECTION: Extended Long Mode Feature & System Call MSRs (0xC0000000 Extended Range)
+; ------------------------------------------------------------------------------
+IA32_EFER                               EQU 0xC0000080  ; Extended Feature Enable Register (R/W) [Thread]
+IA32_STAR                               EQU 0xC0000081  ; Legacy Mode System Call Target Address (R/W) [Thread]
+IA32_LSTAR                              EQU 0xC0000082  ; Long Mode System Call Target Address (R/W) [Thread]
+IA32_FMASK                              EQU 0xC0000084  ; System Call Flag Mask Register (R/W) [Thread]
+IA32_FS_BASE                            EQU 0xC0000100  ; Base Address of FS Segment Register (R/W) [Thread]
+IA32_GS_BASE                            EQU 0xC0000101  ; Base Address of GS Segment Register (R/W) [Thread]
+IA32_KERNEL_GS_BASE                     EQU 0xC0000102  ; Swap Target for Base Address of GS (R/W) [Thread]
+IA32_TSC_AUX                            EQU 0xC0000103  ; Auxiliary TSC Signature Register (R/W) [Thread]
+
+; ==============================================================================
+; INTEL MACHINE CHECK (BANKS 5-19) & DRAM RAPL MSR DEFINITIONS (64-BIT)
+; ==============================================================================
+
+; ------------------------------------------------------------------------------
+; SECTION: Machine Check Architecture (MCA) Error Control 2 Banks (5 to 19)
+; ------------------------------------------------------------------------------
+IA32_MC5_CTL2                           EQU 0x00000285  ; Machine Check Error Control 2 Bank 5 (R/W) [Package]
+IA32_MC6_CTL2                           EQU 0x00000286  ; Machine Check Error Control 2 Bank 6 (R/W) [Package]
+IA32_MC7_CTL2                           EQU 0x00000287  ; Machine Check Error Control 2 Bank 7 (R/W) [Package]
+IA32_MC8_CTL2                           EQU 0x00000288  ; Machine Check Error Control 2 Bank 8 (R/W) [Package]
+IA32_MC9_CTL2                           EQU 0x00000289  ; Machine Check Error Control 2 Bank 9 (R/W) [Package]
+IA32_MC10_CTL2                          EQU 0x0000028A  ; Machine Check Error Control 2 Bank 10 (R/W) [Package]
+IA32_MC11_CTL2                          EQU 0x0000028B  ; Machine Check Error Control 2 Bank 11 (R/W) [Package]
+IA32_MC12_CTL2                          EQU 0x0000028C  ; Machine Check Error Control 2 Bank 12 (R/W) [Package]
+IA32_MC13_CTL2                          EQU 0x0000028D  ; Machine Check Error Control 2 Bank 13 (R/W) [Package]
+IA32_MC14_CTL2                          EQU 0x0000028E  ; Machine Check Error Control 2 Bank 14 (R/W) [Package]
+IA32_MC15_CTL2                          EQU 0x0000028F  ; Machine Check Error Control 2 Bank 15 (R/W) [Package]
+IA32_MC16_CTL2                          EQU 0x00000290  ; Machine Check Error Control 2 Bank 16 (R/W) [Package]
+IA32_MC17_CTL2                          EQU 0x00000291  ; Machine Check Error Control 2 Bank 17 (R/W) [Package]
+IA32_MC18_CTL2                          EQU 0x00000292  ; Machine Check Error Control 2 Bank 18 (R/W) [Package]
+IA32_MC19_CTL2                          EQU 0x00000293  ; Machine Check Error Control 2 Bank 19 (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Alternate Processor Event Based Sampling (PEBS) Control
+; ------------------------------------------------------------------------------
+MSR_PEBS_NUM_ALT                        EQU 0x0000039C  ; Alternate PEBS Counting Logic Configuration (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Machine Check Architecture (MCA) Core Banks (5 to 10)
+; ------------------------------------------------------------------------------
+IA32_MC5_CTL                            EQU 0x00000414  ; Error Signaling Control Bank 5 (R/W) [Package]
+IA32_MC5_STATUS                         EQU 0x00000415  ; Error Logging Status Bank 5 (R/W) [Package]
+IA32_MC5_ADDR                           EQU 0x00000416  ; Error Reporting Address Bank 5 (R/W) [Package]
+IA32_MC5_MISC                           EQU 0x00000417  ; Miscellaneous Error Info Bank 5 (R/W) [Package]
+
+IA32_MC6_CTL                            EQU 0x00000418  ; Error Signaling Control Bank 6 (R/W) [Package]
+IA32_MC6_STATUS                         EQU 0x00000419  ; Error Logging Status Bank 6 (R/W) [Package]
+IA32_MC6_ADDR                           EQU 0x0000041A  ; Error Reporting Address Bank 6 (R/W) [Package]
+IA32_MC6_MISC                           EQU 0x0000041B  ; Miscellaneous Error Info Bank 6 (R/W) [Package]
+
+IA32_MC7_CTL                            EQU 0x0000041C  ; Error Signaling Control Bank 7 (R/W) [Package]
+IA32_MC7_STATUS                         EQU 0x0000041D  ; Error Logging Status Bank 7 (R/W) [Package]
+IA32_MC7_ADDR                           EQU 0x0000041E  ; Error Reporting Address Bank 7 (R/W) [Package]
+IA32_MC7_MISC                           EQU 0x0000041F  ; Miscellaneous Error Info Bank 7 (R/W) [Package]
+
+IA32_MC8_CTL                            EQU 0x00000420  ; Error Signaling Control Bank 8 (R/W) [Package]
+IA32_MC8_STATUS                         EQU 0x00000421  ; Error Logging Status Bank 8 (R/W) [Package]
+IA32_MC8_ADDR                           EQU 0x00000422  ; Error Reporting Address Bank 8 (R/W) [Package]
+IA32_MC8_MISC                           EQU 0x00000423  ; Miscellaneous Error Info Bank 8 (R/W) [Package]
+
+IA32_MC9_CTL                            EQU 0x00000424  ; Error Signaling Control Bank 9 (R/W) [Package]
+IA32_MC9_STATUS                         EQU 0x00000425  ; Error Logging Status Bank 9 (R/W) [Package]
+IA32_MC9_ADDR                           EQU 0x00000426  ; Error Reporting Address Bank 9 (R/W) [Package]
+IA32_MC9_MISC                           EQU 0x00000427  ; Miscellaneous Error Info Bank 9 (R/W) [Package]
+
+IA32_MC10_CTL                           EQU 0x00000428  ; Error Signaling Control Bank 10 (R/W) [Package]
+IA32_MC10_STATUS                        EQU 0x00000429  ; Error Logging Status Bank 10 (R/W) [Package]
+IA32_MC10_ADDR                          EQU 0x0000042A  ; Error Reporting Address Bank 10 (R/W) [Package]
+IA32_MC10_MISC                          EQU 0x0000042B  ; Miscellaneous Error Info Bank 10 (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Machine Check Architecture (MCA) Core Banks (11 to 15)
+; ------------------------------------------------------------------------------
+IA32_MC11_CTL                           EQU 0x0000042C  ; Error Signaling Control Bank 11 (R/W) [Package]
+IA32_MC11_STATUS                        EQU 0x0000042D  ; Error Logging Status Bank 11 (R/W) [Package]
+IA32_MC11_ADDR                          EQU 0x0000042E  ; Error Reporting Address Bank 11 (R/W) [Package]
+IA32_MC11_MISC                          EQU 0x0000042F  ; Miscellaneous Error Info Bank 11 (R/W) [Package]
+
+IA32_MC12_CTL                           EQU 0x00000430  ; Error Signaling Control Bank 12 (R/W) [Package]
+IA32_MC12_STATUS                        EQU 0x00000431  ; Error Logging Status Bank 12 (R/W) [Package]
+IA32_MC12_ADDR                          EQU 0x00000432  ; Error Reporting Address Bank 12 (R/W) [Package]
+IA32_MC12_MISC                          EQU 0x00000433  ; Miscellaneous Error Info Bank 12 (R/W) [Package]
+
+IA32_MC13_CTL                           EQU 0x00000434  ; Error Signaling Control Bank 13 (R/W) [Package]
+IA32_MC13_STATUS                        EQU 0x00000435  ; Error Logging Status Bank 13 (R/W) [Package]
+IA32_MC13_ADDR                          EQU 0x00000436  ; Error Reporting Address Bank 13 (R/W) [Package]
+IA32_MC13_MISC                          EQU 0x00000437  ; Miscellaneous Error Info Bank 13 (R/W) [Package]
+
+IA32_MC14_CTL                           EQU 0x00000438  ; Error Signaling Control Bank 14 (R/W) [Package]
+IA32_MC14_STATUS                        EQU 0x00000439  ; Error Logging Status Bank 14 (R/W) [Package]
+IA32_MC14_ADDR                          EQU 0x0000043A  ; Error Reporting Address Bank 14 (R/W) [Package]
+IA32_MC14_MISC                          EQU 0x0000043B  ; Miscellaneous Error Info Bank 14 (R/W) [Package]
+
+IA32_MC15_CTL                           EQU 0x0000043C  ; Error Signaling Control Bank 15 (R/W) [Package]
+IA32_MC15_STATUS                        EQU 0x0000043D  ; Error Logging Status Bank 15 (R/W) [Package]
+IA32_MC15_ADDR                          EQU 0x0000043E  ; Error Reporting Address Bank 15 (R/W) [Package]
+IA32_MC15_MISC                          EQU 0x0000043F  ; Miscellaneous Error Info Bank 15 (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Machine Check Architecture (MCA) Core Banks (16 to 19)
+; ------------------------------------------------------------------------------
+IA32_MC16_CTL                           EQU 0x00000440  ; Error Signaling Control Bank 16 (R/W) [Package]
+IA32_MC16_STATUS                        EQU 0x00000441  ; Error Logging Status Bank 16 (R/W) [Package]
+IA32_MC16_ADDR                          EQU 0x00000442  ; Error Reporting Address Bank 16 (R/W) [Package]
+IA32_MC16_MISC                          EQU 0x00000443  ; Miscellaneous Error Info Bank 16 (R/W) [Package]
+
+IA32_MC17_CTL                           EQU 0x00000444  ; Error Signaling Control Bank 17 (R/W) [Package]
+IA32_MC17_STATUS                        EQU 0x00000445  ; Error Logging Status Bank 17 (R/W) [Package]
+IA32_MC17_ADDR                          EQU 0x00000446  ; Error Reporting Address Bank 17 (R/W) [Package]
+IA32_MC17_MISC                          EQU 0x00000447  ; Miscellaneous Error Info Bank 17 (R/W) [Package]
+
+IA32_MC18_CTL                           EQU 0x00000448  ; Error Signaling Control Bank 18 (R/W) [Package]
+IA32_MC18_STATUS                        EQU 0x00000449  ; Error Logging Status Bank 18 (R/W) [Package]
+IA32_MC18_ADDR                          EQU 0x0000044A  ; Error Reporting Address Bank 18 (R/W) [Package]
+IA32_MC18_MISC                          EQU 0x0000044B  ; Miscellaneous Error Info Bank 18 (R/W) [Package]
+
+IA32_MC19_CTL                           EQU 0x0000044C  ; Error Signaling Control Bank 19 (R/W) [Package]
+IA32_MC19_STATUS                        EQU 0x0000044D  ; Error Logging Status Bank 19 (R/W) [Package]
+IA32_MC19_ADDR                          EQU 0x0000044E  ; Error Reporting Address Bank 19 (R/W) [Package]
+IA32_MC19_MISC                          EQU 0x0000044F  ; Miscellaneous Error Info Bank 19 (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Package Performance & DRAM RAPL Power Domains
+; ------------------------------------------------------------------------------
+MSR_PKG_PERF_STATUS                     EQU 0x00000613  ; Package RAPL Performance Throttling Status (R/O - Read Only) [Package]
+MSR_DRAM_POWER_LIMIT                    EQU 0x00000618  ; DRAM RAPL Power Limit Control (R/W) [Package]
+MSR_DRAM_PERF_STATUS                    EQU 0x0000061B  ; DRAM Performance Throttling Status (R/O) [Package]
+MSR_DRAM_ENERGY_STATUS                  EQU 0x00000619  ; DRAM Energy Consumption Status Counter (R/O) [Package]
+MSR_DRAM_POWER_INFO                     EQU 0x0000061C  ; DRAM RAPL Parameter Range Information (R/W) [Package]
+MSR_PP0_ENERGY_STATUS                   EQU 0x00000639  ; PP0 Plane Energy Status Counter (R/O) [Package]
+
+; ==============================================================================
+; INTEL MCA CORE, DRAM RAPL, AND EXTENDED UNCORE PMON MSR DEFINITIONS (64-BIT)
+; ==============================================================================
+
+; ------------------------------------------------------------------------------
+; SECTION: Machine Check Architecture (MCA) Core Banks (7 to 19)
+; ------------------------------------------------------------------------------
+IA32_MC7_STATUS                         EQU 0x0000041D  ; Error Logging Status Bank 7 (R/W) [Package]
+IA32_MC7_ADDR                           EQU 0x0000041E  ; Error Reporting Address Bank 7 (R/W) [Package]
+IA32_MC7_MISC                           EQU 0x0000041F  ; Miscellaneous Error Info Bank 7 (R/W) [Package]
+
+IA32_MC8_CTL                            EQU 0x00000420  ; Error Signaling Control Bank 8 (R/W) [Package]
+IA32_MC8_STATUS                         EQU 0x00000421  ; Error Logging Status Bank 8 (R/W) [Package]
+IA32_MC8_ADDR                           EQU 0x00000422  ; Error Reporting Address Bank 8 (R/W) [Package]
+IA32_MC8_MISC                           EQU 0x00000423  ; Miscellaneous Error Info Bank 8 (R/W) [Package]
+
+IA32_MC9_CTL                            EQU 0x00000424  ; Error Signaling Control Bank 9 (R/W) [Package]
+IA32_MC9_STATUS                         EQU 0x00000425  ; Error Logging Status Bank 9 (R/W) [Package]
+IA32_MC9_ADDR                           EQU 0x00000426  ; Error Reporting Address Bank 9 (R/W) [Package]
+IA32_MC9_MISC                           EQU 0x00000427  ; Miscellaneous Error Info Bank 9 (R/W) [Package]
+
+IA32_MC10_CTL                           EQU 0x00000428  ; Error Signaling Control Bank 10 (R/W) [Package]
+IA32_MC10_STATUS                        EQU 0x00000429  ; Error Logging Status Bank 10 (R/W) [Package]
+IA32_MC10_ADDR                          EQU 0x0000042A  ; Error Reporting Address Bank 10 (R/W) [Package]
+IA32_MC10_MISC                          EQU 0x0000042B  ; Miscellaneous Error Info Bank 10 (R/W) [Package]
+
+IA32_MC11_CTL                           EQU 0x0000042C  ; Error Signaling Control Bank 11 (R/W) [Package]
+IA32_MC11_STATUS                        EQU 0x0000042D  ; Error Logging Status Bank 11 (R/W) [Package]
+IA32_MC11_ADDR                          EQU 0x0000042E  ; Error Reporting Address Bank 11 (R/W) [Package]
+IA32_MC11_MISC                          EQU 0x0000042F  ; Miscellaneous Error Info Bank 11 (R/W) [Package]
+
+IA32_MC12_CTL                           EQU 0x00000430  ; Error Signaling Control Bank 12 (R/W) [Package]
+IA32_MC12_STATUS                        EQU 0x00000431  ; Error Logging Status Bank 12 (R/W) [Package]
+IA32_MC12_ADDR                          EQU 0x00000432  ; Error Reporting Address Bank 12 (R/W) [Package]
+IA32_MC12_MISC                          EQU 0x00000433  ; Miscellaneous Error Info Bank 12 (R/W) [Package]
+
+IA32_MC13_CTRL                          EQU 0x00000434  ; Error Signaling Control Bank 13 (R/W) [Package]
+IA32_MC13_STATUS                        EQU 0x00000435  ; Error Logging Status Bank 13 (R/W) [Package]
+IA32_MC13_ADDR                          EQU 0x00000436  ; Error Reporting Address Bank 13 (R/W) [Package]
+IA32_MC13_MISC                          EQU 0x00000437  ; Miscellaneous Error Info Bank 13 (R/W) [Package]
+
+IA32_MC14_CTL                           EQU 0x00000438  ; Error Signaling Control Bank 14 (R/W) [Package]
+IA32_MC14_STATUS                        EQU 0x00000439  ; Error Logging Status Bank 14 (R/W) [Package]
+IA32_MC14_ADDR                          EQU 0x0000043A  ; Error Reporting Address Bank 14 (R/W) [Package]
+IA32_MC14_MISC                          EQU 0x0000043B  ; Miscellaneous Error Info Bank 14 (R/W) [Package]
+
+IA32_MC15_CTL                           EQU 0x0000043C  ; Error Signaling Control Bank 15 (R/W) [Package]
+IA32_MC15_STATUS                        EQU 0x0000043D  ; Error Logging Status Bank 15 (R/W) [Package]
+IA32_MC15_ADDR                          EQU 0x0000043E  ; Error Reporting Address Bank 15 (R/W) [Package]
+IA32_MC15_MISC                          EQU 0x0000043F  ; Miscellaneous Error Info Bank 15 (R/W) [Package]
+
+IA32_MC16_CTL                           EQU 0x00000440  ; Error Signaling Control Bank 16 (R/W) [Package]
+IA32_MC16_STATUS                        EQU 0x00000441  ; Error Logging Status Bank 16 (R/W) [Package]
+IA32_MC16_ADDR                          EQU 0x00000442  ; Error Reporting Address Bank 16 (R/W) [Package]
+IA32_MC16_MISC                          EQU 0x00000443  ; Miscellaneous Error Info Bank 16 (R/W) [Package]
+
+IA32_MC17_CTL                           EQU 0x00000444  ; Error Signaling Control Bank 17 (R/W) [Package]
+IA32_MC17_STATUS                        EQU 0x00000445  ; Error Logging Status Bank 17 (R/W) [Package]
+IA32_MC17_ADDR                          EQU 0x00000446  ; Error Reporting Address Bank 17 (R/W) [Package]
+IA32_MC17_MISC                          EQU 0x00000447  ; Miscellaneous Error Info Bank 17 (R/W) [Package]
+
+IA32_MC18_CTL                           EQU 0x00000448  ; Error Signaling Control Bank 18 (R/W) [Package]
+IA32_MC18_STATUS                        EQU 0x00000449  ; Error Logging Status Bank 18 (R/W) [Package]
+IA32_MC18_ADDR                          EQU 0x0000044A  ; Error Reporting Address Bank 18 (R/W) [Package]
+IA32_MC18_MISC                          EQU 0x0000044B  ; Miscellaneous Error Info Bank 18 (R/W) [Package]
+
+IA32_MC19_CTL                           EQU 0x0000044C  ; Error Signaling Control Bank 19 (R/W) [Package]
+IA32_MC19_STATUS                        EQU 0x0000044D  ; Error Logging Status Bank 19 (R/W) [Package]
+IA32_MC19_ADDR                          EQU 0x0000044E  ; Error Reporting Address Bank 19 (R/W) [Package]
+IA32_MC19_MISC                          EQU 0x0000044F  ; Miscellaneous Error Info Bank 19 (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Package Performance & DRAM RAPL Power Domains
+; ------------------------------------------------------------------------------
+MSR_PKG_PERF_STATUS                     EQU 0x00000613  ; Package RAPL Performance Status (R/O - Read Only) [Package]
+MSR_DRAM_POWER_LIMIT                    EQU 0x00000618  ; DRAM RAPL Power Limit Control (R/W) [Package]
+MSR_DRAM_ENERGY_STATUS                  EQU 0x00000619  ; DRAM Energy Status Counter (R/O) [Package]
+MSR_DRAM_PERF_STATUS                    EQU 0x0000061B  ; DRAM Performance Throttling Status (R/O) [Package]
+MSR_DRAM_POWER_INFO                     EQU 0x0000061C  ; DRAM RAPL Parameter Ranges (R/W) [Package]
+MSR_PP0_ENERGY_STATUS                   EQU 0x00000639  ; PP0 Plane Energy Status Counter (R/O) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Uncore U-Box Performance Monitoring MSRs
+; ------------------------------------------------------------------------------
+MSR_U_PMON_UCLK_FIXED_CTL               EQU 0x00000C08  ; Uncore U-box UCLK Fixed Counter Control (R/W) [Package]
+MSR_U_PMON_UCLK_FIXED_CTR               EQU 0x00000C09  ; Uncore U-box UCLK Fixed Counter (R/W) [Package]
+MSR_U_PMON_EVNTSEL0                     EQU 0x00000C10  ; Uncore U-box Event Select Counter 0 (R/W) [Package]
+MSR_U_PMON_EVNTSEL1                     EQU 0x00000C11  ; Uncore U-box Event Select Counter 1 (R/W) [Package]
+MSR_U_PMON_CTR0                         EQU 0x00000C16  ; Uncore U-box Performance Counter 0 (R/W) [Package]
+MSR_U_PMON_CTR1                         EQU 0x00000C17  ; Uncore U-box Performance Counter 1 (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Uncore PCU (Power Control Unit) Performance Monitoring MSRs
+; ------------------------------------------------------------------------------
+MSR_PCU_PMON_BOX_CTL                    EQU 0x00000C24  ; Uncore PCU Box-wide Control Register (R/W) [Package]
+MSR_PCU_PMON_EVNTSEL0                   EQU 0x00000C30  ; Uncore PCU Event Select Counter 0 (R/W) [Package]
+MSR_PCU_PMON_EVNTSEL1                   EQU 0x00000C31  ; Uncore PCU Event Select Counter 1 (R/W) [Package]
+MSR_PCU_PMON_EVNTSEL2                   EQU 0x00000C32  ; Uncore PCU Event Select Counter 2 (R/W) [Package]
+MSR_PCU_PMON_EVNTSEL3                   EQU 0x00000C33  ; Uncore PCU Event Select Counter 3 (R/W) [Package]
+MSR_PCU_PMON_BOX_FILTER                 EQU 0x00000C34  ; Uncore PCU Box-wide Filter Register (R/W) [Package]
+MSR_PCU_PMON_CTR0                       EQU 0x00000C36  ; Uncore PCU Performance Counter 0 (R/W) [Package]
+MSR_PCU_PMON_CTR1                       EQU 0x00000C37  ; Uncore PCU Performance Counter 1 (R/W) [Package]
+MSR_PCU_PMON_CTR2                       EQU 0x00000C38  ; Uncore PCU Performance Counter 2 (R/W) [Package]
+MSR_PCU_PMON_CTR3                       EQU 0x00000C39  ; Uncore PCU Performance Counter 3 (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Uncore C-Box 0 Performance Monitoring MSRs
+; ------------------------------------------------------------------------------
+MSR_C0_PMON_BOX_CTL                     EQU 0x00000D04  ; Uncore C-box 0 Box-wide Control Register (R/W) [Package]
+MSR_C0_PMON_EVNTSEL0                    EQU 0x00000D10  ; Uncore C-box 0 Event Select Counter 0 (R/W) [Package]
+MSR_C0_PMON_EVNTSEL1                    EQU 0x00000D11  ; Uncore C-box 0 Event Select Counter 1 (R/W) [Package]
+MSR_C0_PMON_EVNTSEL2                    EQU 0x00000D12  ; Uncore C-box 0 Event Select Counter 2 (R/W) [Package]
+MSR_C0_PMON_EVNTSEL3                    EQU 0x00000D13  ; Uncore C-box 0 Event Select Counter 3 (R/W) [Package]
+MSR_C0_PMON_BOX_FILTER                  EQU 0x00000D14  ; Uncore C-box 0 Box-wide Filter Register (R/W) [Package]
+MSR_C0_PMON_CTR0                        EQU 0x00000D16  ; Uncore C-box 0 Performance Counter 0 (R/W) [Package]
+MSR_C0_PMON_CTR1                        EQU 0x00000D17  ; Uncore C-box 0 Performance Counter 1 (R/W) [Package]
+MSR_C0_PMON_CTR2                        EQU 0x00000D18  ; Uncore C-box 0 Performance Counter 2 (R/W) [Package]
+MSR_C0_PMON_CTR3                        EQU 0x00000D19  ; Uncore C-box 0 Performance Counter 3 (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Uncore C-Box 1 Performance Monitoring MSRs
+; ------------------------------------------------------------------------------
+MSR_C1_PMON_BOX_CTL                     EQU 0x00000D24  ; Uncore C-box 1 Box-wide Control Register (R/W) [Package]
+MSR_C1_PMON_EVNTSEL0                    EQU 0x00000D30  ; Uncore C-box 1 Event Select Counter 0 (R/W) [Package]
+MSR_C1_PMON_EVNTSEL1                    EQU 0x00000D31  ; Uncore C-box 1 Event Select Counter 1 (R/W) [Package]
+MSR_C1_PMON_EVNTSEL2                    EQU 0x00000D32  ; Uncore C-box 1 Event Select Counter 2 (R/W) [Package]
+MSR_C1_PMON_EVNTSEL3                    EQU 0x00000D33  ; Uncore C-box 1 Event Select Counter 3 (R/W) [Package]
+MSR_C1_PMON_BOX_FILTER                  EQU 0x00000D34  ; Uncore C-box 1 Box-wide Filter Register (R/W) [Package]
+MSR_C1_PMON_CTR0                        EQU 0x00000D36  ; Uncore C-box 1 Performance Counter 0 (R/W) [Package]
+MSR_C1_PMON_CTR1                        EQU 0x00000D37  ; Uncore C-box 1 Performance Counter 1 (R/W) [Package]
+MSR_C1_PMON_CTR2                        EQU 0x00000D38  ; Uncore C-box 1 Performance Counter 2 (R/W) [Package]
+MSR_C1_PMON_CTR3                        EQU 0x00000D39  ; Uncore C-box 1 Performance Counter 3 (R/W) [Package]
+; ------------------------------------------------------------------------------
+; SECTION: Uncore C-Box 2 Performance Monitoring MSRs (Partial)
+; ------------------------------------------------------------------------------
+MSR_C2_PMON_BOX_CTL                     EQU 0x00000D44  ; Uncore C-box 2 Box-wide Control Register (R/W) [Package]
+MSR_C2_PMON_EVNTSEL0                    EQU 0x00000D50  ; Uncore C-box 2 Event Select Counter 0 (R/W) [Package]
+MSR_C2_PMON_EVNTSEL1                    EQU 0x00000D51  ; Uncore C-box 2 Event Select Counter 1 (R/W) [Package]
+MSR_C2_PMON_EVNTSEL2                    EQU 0x00000D52  ; Uncore C-box 2 Event Select Counter 2 (R/W) [Package]
+MSR_C2_PMON_EVNTSEL3                    EQU 0x00000D53  ; Uncore C-box 2 Event Select Counter 3 (R/W) [Package]
+MSR_C2_PMON_BOX_FILTER                  EQU 0x00000D54  ; Uncore C-box 2 Box-wide Filter Register (R/W) [Package]
+
+; ==============================================================================
+; INTEL UNCORE PERFORMANCE MONITORING (U-BOX, PCU, C-BOX 0-7) DEFINITIONS (64-BIT)
+; ==============================================================================
+
+; ------------------------------------------------------------------------------
+; SECTION: Uncore U-Box Performance Monitoring MSRs
+; ------------------------------------------------------------------------------
+MSR_U_PMON_EVNTSEL0                     EQU 0x00000C10  ; Uncore U-box Perfmon Event Select for U-box Counter 0 (R/W) [Package]
+MSR_U_PMON_EVNTSEL1                     EQU 0x00000C11  ; Uncore U-box Perfmon Event Select for U-box Counter 1 (R/W) [Package]
+MSR_U_PMON_CTR0                         EQU 0x00000C16  ; Uncore U-box Perfmon Counter 0 (R/W) [Package]
+MSR_U_PMON_CTR1                         EQU 0x00000C17  ; Uncore U-box Perfmon Counter 1 (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Uncore PCU (Power Control Unit) Performance Monitoring MSRs
+; ------------------------------------------------------------------------------
+MSR_PCU_PMON_BOX_CTL                    EQU 0x00000C24  ; Uncore PCU Perfmon for PCU-box-wide Control (R/W) [Package]
+MSR_PCU_PMON_EVNTSEL0                   EQU 0x00000C30  ; Uncore PCU Perfmon Event Select for PCU Counter 0 (R/W) [Package]
+MSR_PCU_PMON_EVNTSEL1                   EQU 0x00000C31  ; Uncore PCU Perfmon Event Select for PCU Counter 1 (R/W) [Package]
+MSR_PCU_PMON_EVNTSEL2                   EQU 0x00000C32  ; Uncore PCU Perfmon Event Select for PCU Counter 2 (R/W) [Package]
+MSR_PCU_PMON_EVNTSEL3                   EQU 0x00000C33  ; Uncore PCU Perfmon Event Select for PCU Counter 3 (R/W) [Package]
+MSR_PCU_PMON_BOX_FILTER                 EQU 0x00000C34  ; Uncore PCU Perfmon box-wide Filter (R/W) [Package]
+MSR_PCU_PMON_CTR0                       EQU 0x00000C36  ; Uncore PCU Perfmon Counter 0 (R/W) [Package]
+MSR_PCU_PMON_CTR1                       EQU 0x00000C37  ; Uncore PCU Perfmon Counter 1 (R/W) [Package]
+MSR_PCU_PMON_CTR2                       EQU 0x00000C38  ; Uncore PCU Perfmon Counter 2 (R/W) [Package]
+MSR_PCU_PMON_CTR3                       EQU 0x00000C39  ; Uncore PCU Perfmon Counter 3 (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Uncore C-Box 0 Performance Monitoring MSRs
+; ------------------------------------------------------------------------------
+MSR_C0_PMON_BOX_CTL                     EQU 0x00000D04  ; Uncore C-box 0 Perfmon Local Box Wide Control (R/W) [Package]
+MSR_C0_PMON_EVNTSEL0                    EQU 0x00000D10  ; Uncore C-box 0 Perfmon Event Select for Counter 0 (R/W) [Package]
+MSR_C0_PMON_EVNTSEL1                    EQU 0x00000D11  ; Uncore C-box 0 Perfmon Event Select for Counter 1 (R/W) [Package]
+MSR_C0_PMON_EVNTSEL2                    EQU 0x00000D12  ; Uncore C-box 0 Perfmon Event Select for Counter 2 (R/W) [Package]
+MSR_C0_PMON_EVNTSEL3                    EQU 0x00000D13  ; Uncore C-box 0 Perfmon Event Select for Counter 3 (R/W) [Package]
+MSR_C0_PMON_BOX_FILTER                  EQU 0x00000D14  ; Uncore C-box 0 Perfmon Box Wide Filter (R/W) [Package]
+MSR_C0_PMON_CTR0                        EQU 0x00000D16  ; Uncore C-box 0 Perfmon Counter 0 (R/W) [Package]
+MSR_C0_PMON_CTR1                        EQU 0x00000D17  ; Uncore C-box 0 Perfmon Counter 1 (R/W) [Package]
+MSR_C0_PMON_CTR2                        EQU 0x00000D18  ; Uncore C-box 0 Perfmon Counter 2 (R/W) [Package]
+MSR_C0_PMON_CTR3                        EQU 0x00000D19  ; Uncore C-box 0 Perfmon Counter 3 (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Uncore C-Box 1 Performance Monitoring MSRs
+; ------------------------------------------------------------------------------
+MSR_C1_PMON_BOX_CTL                     EQU 0x00000D24  ; Uncore C-box 1 Perfmon Local Box Wide Control (R/W) [Package]
+MSR_C1_PMON_EVNTSEL0                    EQU 0x00000D30  ; Uncore C-box 1 Perfmon Event Select for Counter 0 (R/W) [Package]
+MSR_C1_PMON_EVNTSEL1                    EQU 0x00000D31  ; Uncore C-box 1 Perfmon Event Select for Counter 1 (R/W) [Package]
+MSR_C1_PMON_EVNTSEL2                    EQU 0x00000D32  ; Uncore C-box 1 Perfmon Event Select for Counter 2 (R/W) [Package]
+MSR_C1_PMON_EVNTSEL3                    EQU 0x00000D33  ; Uncore C-box 1 Perfmon Event Select for Counter 3 (R/W) [Package]
+MSR_C1_PMON_BOX_FILTER                  EQU 0x00000D34  ; Uncore C-box 1 Perfmon Box Wide Filter (R/W) [Package]
+MSR_C1_PMON_CTR0                        EQU 0x00000D36  ; Uncore C-box 1 Perfmon Counter 0 (R/W) [Package]
+MSR_C1_PMON_CTR1                        EQU 0x00000D37  ; Uncore C-box 1 Perfmon Counter 1 (R/W) [Package]
+MSR_C1_PMON_CTR2                        EQU 0x00000D38  ; Uncore C-box 1 Perfmon Counter 2 (R/W) [Package]
+MSR_C1_PMON_CTR3                        EQU 0x00000D39  ; Uncore C-box 1 Perfmon Counter 3 (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Uncore C-Box 2 Performance Monitoring MSRs
+; ------------------------------------------------------------------------------
+MSR_C2_PMON_BOX_CTL                     EQU 0x00000D44  ; Uncore C-box 2 Perfmon Local Box Wide Control (R/W) [Package]
+MSR_C2_PMON_EVNTSEL0                    EQU 0x00000D50  ; Uncore C-box 2 Perfmon Event Select for Counter 0 (R/W) [Package]
+MSR_C2_PMON_EVNTSEL1                    EQU 0x00000D51  ; Uncore C-box 2 Perfmon Event Select for Counter 1 (R/W) [Package]
+MSR_C2_PMON_EVNTSEL2                    EQU 0x00000D52  ; Uncore C-box 2 Perfmon Event Select for Counter 2 (R/W) [Package]
+MSR_C2_PMON_EVNTSEL3                    EQU 0x00000D53  ; Uncore C-box 2 Perfmon Event Select for Counter 3 (R/W) [Package]
+MSR_C2_PMON_BOX_FILTER                  EQU 0x00000D54  ; Uncore C-box 2 Perfmon Box Wide Filter (R/W) [Package]
+MSR_C2_PMON_CTR0                        EQU 0x00000D56  ; Uncore C-box 2 Perfmon Counter 0 (R/W) [Package]
+MSR_C2_PMON_CTR1                        EQU 0x00000D57  ; Uncore C-box 2 Perfmon Counter 1 (R/W) [Package]
+MSR_C2_PMON_CTR2                        EQU 0x00000D58  ; Uncore C-box 2 Perfmon Counter 2 (R/W) [Package]
+MSR_C2_PMON_CTR3                        EQU 0x00000D59  ; Uncore C-box 2 Perfmon Counter 3 (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Uncore C-Box 3 Performance Monitoring MSRs
+; ------------------------------------------------------------------------------
+MSR_C3_PMON_BOX_CTL                     EQU 0x00000D64  ; Uncore C-box 3 Perfmon Local Box Wide Control (R/W) [Package]
+MSR_C3_PMON_EVNTSEL0                    EQU 0x00000D70  ; Uncore C-box 3 Perfmon Event Select for Counter 0 (R/W) [Package]
+MSR_C3_PMON_EVNTSEL1                    EQU 0x00000D71  ; Uncore C-box 3 Perfmon Event Select for Counter 1 (R/W) [Package]
+MSR_C3_PMON_EVNTSEL2                    EQU 0x00000D72  ; Uncore C-box 3 Perfmon Event Select for Counter 2 (R/W) [Package]
+MSR_C3_PMON_EVNTSEL3                    EQU 0x00000D73  ; Uncore C-box 3 Perfmon Event Select for Counter 3 (R/W) [Package]
+MSR_C3_PMON_BOX_FILTER                  EQU 0x00000D74  ; Uncore C-box 3 Perfmon Box Wide Filter (R/W) [Package]
+MSR_C3_PMON_CTR0                        EQU 0x00000D76  ; Uncore C-box 3 Perfmon Counter 0 (R/W) [Package]
+MSR_C3_PMON_CTR1                        EQU 0x00000D77  ; Uncore C-box 3 Perfmon Counter 1 (R/W) [Package]
+MSR_C3_PMON_CTR2                        EQU 0x00000D78  ; Uncore C-box 3 Perfmon Counter 2 (R/W) [Package]
+MSR_C3_PMON_CTR3                        EQU 0x00000D79  ; Uncore C-box 3 Perfmon Counter 3 (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Uncore C-Box 4 Performance Monitoring MSRs
+; ------------------------------------------------------------------------------
+MSR_C4_PMON_BOX_CTL                     EQU 0x00000D84  ; Uncore C-box 4 Perfmon Local Box Wide Control (R/W) [Package]
+MSR_C4_PMON_EVNTSEL0                    EQU 0x00000D90  ; Uncore C-box 4 Perfmon Event Select for Counter 0 (R/W) [Package]
+MSR_C4_PMON_EVNTSEL1                    EQU 0x00000D91  ; Uncore C-box 4 Perfmon Event Select for Counter 1 (R/W) [Package]
+MSR_C4_PMON_EVNTSEL2                    EQU 0x00000D92  ; Uncore C-box 4 Perfmon Event Select for Counter 2 (R/W) [Package]
+MSR_C4_PMON_EVNTSEL3                    EQU 0x00000D93  ; Uncore C-box 4 Perfmon Event Select for Counter 3 (R/W) [Package]
+MSR_C4_PMON_BOX_FILTER                  EQU 0x00000D94  ; Uncore C-box 4 Perfmon Box Wide Filter (R/W) [Package]
+MSR_C4_PMON_CTR0                        EQU 0x00000D96  ; Uncore C-box 4 Perfmon Counter 0 (R/W) [Package]
+MSR_C4_PMON_CTR1                        EQU 0x00000D97  ; Uncore C-box 4 Perfmon Counter 1 (R/W) [Package]
+MSR_C4_PMON_CTR2                        EQU 0x00000D98  ; Uncore C-box 4 Perfmon Counter 2 (R/W) [Package]
+MSR_C4_PMON_CTR3                        EQU 0x00000D99  ; Uncore C-box 4 Perfmon Counter 3 (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Uncore C-Box 5 Performance Monitoring MSRs
+; ------------------------------------------------------------------------------
+MSR_C5_PMON_BOX_CTL                     EQU 0x00000DA4  ; Uncore C-box 5 Perfmon Local Box Wide Control (R/W) [Package]
+MSR_C5_PMON_EVNTSEL0                    EQU 0x00000DB0  ; Uncore C-box 5 Perfmon Event Select for Counter 0 (R/W) [Package]
+MSR_C5_PMON_EVNTSEL1                    EQU 0x00000DB1  ; Uncore C-box 5 Perfmon Event Select for Counter 1 (R/W) [Package]
+MSR_C5_PMON_EVNTSEL2                    EQU 0x00000DB2  ; Uncore C-box 5 Perfmon Event Select for Counter 2 (R/W) [Package]
+MSR_C5_PMON_EVNTSEL3                    EQU 0x00000DB3  ; Uncore C-box 5 Perfmon Event Select for Counter 3 (R/W) [Package]
+MSR_C5_PMON_BOX_FILTER                  EQU 0x00000DB4  ; Uncore C-box 5 Perfmon Box Wide Filter (R/W) [Package]
+MSR_C5_PMON_CTR0                        EQU 0x00000DB6  ; Uncore C-box 5 Perfmon Counter 0 (R/W) [Package]
+MSR_C5_PMON_CTR1                        EQU 0x00000DB7  ; Uncore C-box 5 Perfmon Counter 1 (R/W) [Package]
+MSR_C5_PMON_CTR2                        EQU 0x00000DB8  ; Uncore C-box 5 Perfmon Counter 2 (R/W) [Package]
+MSR_C5_PMON_CTR3                        EQU 0x00000DB9  ; Uncore C-box 5 Perfmon Counter 3 (R/W) [Package]
+; ------------------------------------------------------------------------------
+; SECTION: Uncore C-Box 6 Performance Monitoring MSRs
+; ------------------------------------------------------------------------------
+MSR_C6_PMON_BOX_CTL                     EQU 0x00000DC4  ; Uncore C-box 6 Perfmon Local Box Wide Control (R/W) [Package]
+MSR_C6_PMON_EVNTSEL0                    EQU 0x00000DD0  ; Uncore C-box 6 Perfmon Event Select for Counter 0 (R/W) [Package]
+MSR_C6_PMON_EVNTSEL1                    EQU 0x00000DD1  ; Uncore C-box 6 Perfmon Event Select for Counter 1 (R/W) [Package]
+MSR_C6_PMON_EVNTSEL2                    EQU 0x00000DD2  ; Uncore C-box 6 Perfmon Event Select for Counter 2 (R/W) [Package]
+MSR_C6_PMON_EVNTSEL3                    EQU 0x00000DD3  ; Uncore C-box 6 Perfmon Event Select for Counter 3 (R/W) [Package]
+MSR_C6_PMON_BOX_FILTER                  EQU 0x00000DD4  ; Uncore C-box 6 Perfmon Box Wide Filter (R/W) [Package]
+MSR_C6_PMON_CTR0                        EQU 0x00000DD6  ; Uncore C-box 6 Perfmon Counter 0 (R/W) [Package]
+MSR_C6_PMON_CTR1                        EQU 0x00000DD7  ; Uncore C-box 6 Perfmon Counter 1 (R/W) [Package]
+MSR_C6_PMON_CTR2                        EQU 0x00000DD8  ; Uncore C-box 6 Perfmon Counter 2 (R/W) [Package]
+MSR_C6_PMON_CTR3                        EQU 0x00000DD9  ; Uncore C-box 6 Perfmon Counter 3 (R/W) [Package]
+; ------------------------------------------------------------------------------
+; SECTION: Uncore C-Box 7 Performance Monitoring MSRs
+; ------------------------------------------------------------------------------
+MSR_C7_PMON_BOX_CTL                     EQU 0x00000DE4  ; Uncore C-box 7 Perfmon Local Box Wide Control (R/W) [Package]
+MSR_C7_PMON_EVNTSEL0                    EQU 0x00000DF0  ; Uncore C-box 7 Perfmon Event Select for Counter 0 (R/W) [Package]
+MSR_C7_PMON_EVNTSEL1                    EQU 0x00000DF1  ; Uncore C-box 7 Perfmon Event Select for Counter 1 (R/W) [Package]
+MSR_C7_PMON_EVNTSEL2                    EQU 0x00000DF2  ; Uncore C-box 7 Perfmon Event Select for Counter 2 (R/W) [Package]
+MSR_C7_PMON_EVNTSEL3                    EQU 0x00000DF3  ; Uncore C-box 7 Perfmon Event Select for Counter 3 (R/W) [Package]
+MSR_C7_PMON_BOX_FILTER                  EQU 0x00000DF4  ; Uncore C-box 7 Perfmon Box Wide Filter (R/W) [Package]
+MSR_C7_PMON_CTR0                        EQU 0x00000DF6  ; Uncore C-box 7 Perfmon Counter 0 (R/W) [Package]
+MSR_C7_PMON_CTR1                        EQU 0x00000DF7  ; Uncore C-box 7 Perfmon Counter 1 (R/W) [Package]
+MSR_C7_PMON_CTR2                        EQU 0x00000DF8  ; Uncore C-box 7 Perfmon Counter 2 (R/W) [Package]
+MSR_C7_PMON_CTR3                        EQU 0x00000DF9  ; Uncore C-box 7 Perfmon Counter 3 (R/W) [Package]
+
+; ==============================================================================
+; INTEL CONFIG TDP, PPIN, PLATFORM INFO & THERMAL TARGET MSR DEFINITIONS (64-BIT)
+; ==============================================================================
+
+; ------------------------------------------------------------------------------
+; SECTION: Processor Inventory Number (PPIN) MSRs
+; ------------------------------------------------------------------------------
+IA32_PPIN_CTL                           EQU 0x0000004E  ; Protected Processor Inventory Number Enable Control (R/W) [Package]
+IA32_PPIN                               EQU 0x0000004F  ; Protected Processor Inventory Number (R/O - Read Only) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Platform Configuration & Capabilities Information
+; ------------------------------------------------------------------------------
+MSR_PLATFORM_INFO                       EQU 0x000000CE  ; Platform Information (Power Management & Features Enumeration) (R/O) [Package]
+IA32_MCG_CAP                            EQU 0x00000179  ; Global Machine Check Capability Register (R/O) [Thread]
+MSR_ERROR_CONTROL                       EQU 0x0000017F  ; Machine Check Bank Error Configuration Register (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Power Management & C-State Control
+; ------------------------------------------------------------------------------
+MSR_PKG_CST_CONFIG_CONTROL              EQU 0x000000E2  ; C-State Configuration Control Register (R/W) [Core]
+MSR_PP0_ENERGY_STATUS                   EQU 0x00000639  ; PP0 Plane Energy Status Counter (R/O) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Configurable TDP (Thermal Design Power) Control MSRs
+; ------------------------------------------------------------------------------
+MSR_CONFIG_TDP_NOMINAL                  EQU 0x00000648  ; Base TDP Ratio Profile (R/O) [Package]
+MSR_CONFIG_TDP_LEVEL1                   EQU 0x00000649  ; ConfigTDP Level 1 Ratio and Power Level (R/O) [Package]
+MSR_CONFIG_TDP_LEVEL2                   EQU 0x0000064A  ; ConfigTDP Level 2 Ratio and Power Level (R/O) [Package]
+MSR_CONFIG_TDP_CONTROL                  EQU 0x0000064B  ; ConfigTDP Ratio & Frequency Profile Control (R/W) [Package]
+MSR_TURBO_ACTIVATION_RATIO              EQU 0x0000064C  ; Turbo Activation Ratio Control (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Turbo Overclocking & Thermal Targets
+; ------------------------------------------------------------------------------
+MSR_TEMPERATURE_TARGET                  EQU 0x000001A2  ; Processor Temperature Target / TjMax Value (R/O) [Package]
+MSR_TURBO_RATIO_LIMIT1                  EQU 0x000001AE  ; Maximum Core Ratio Limit for Turbo Mode (R/O or R/W via Platform Info) [Package]
+
+; ==============================================================================
+; INTEL TURBO RATIO & EXTENDED MCA BANKS 5-28 MSR DEFINITIONS (64-BIT)
+; ==============================================================================
+
+; ------------------------------------------------------------------------------
+; SECTION: Turbo Overclocking Restrictions
+; ------------------------------------------------------------------------------
+MSR_TURBO_RATIO_LIMIT1                  EQU 0x000001AE  ; Maximum Core Ratio Limit for Turbo Mode (R/O or R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Machine Check Architecture (MCA) Error Control 2 Banks (5 to 28)
+; ------------------------------------------------------------------------------
+IA32_MC5_CTL2                           EQU 0x00000285  ; QPI Module Error Control 2 (R/W) [Package]
+IA32_MC6_CTL2                           EQU 0x00000286  ; Integrated I/O Module Error Control 2 (R/W) [Package]
+IA32_MC7_CTL2                           EQU 0x00000287  ; Home Agent 0 Error Control 2 (R/W) [Package]
+IA32_MC8_CTL2                           EQU 0x00000288  ; Home Agent 1 Error Control 2 (R/W) [Package]
+IA32_MC9_CTL2                           EQU 0x00000289  ; Integrated Memory Controller Ch 0 Error Control 2 (R/W) [Package]
+IA32_MC10_CTL2                          EQU 0x0000028A  ; Integrated Memory Controller Ch 1 Error Control 2 (R/W) [Package]
+IA32_MC11_CTL2                          EQU 0x0000028B  ; Integrated Memory Controller Ch 2 Error Control 2 (R/W) [Package]
+IA32_MC12_CTL2                          EQU 0x0000028C  ; Integrated Memory Controller Ch 3 Error Control 2 (R/W) [Package]
+IA32_MC13_CTL2                          EQU 0x0000028D  ; Integrated Memory Controller Ch 4 Error Control 2 (R/W) [Package]
+IA32_MC14_CTL2                          EQU 0x0000028E  ; Integrated Memory Controller Ch 5 Error Control 2 (R/W) [Package]
+IA32_MC15_CTL2                          EQU 0x0000028F  ; Integrated Memory Controller Ch 6 Error Control 2 (R/W) [Package]
+IA32_MC16_CTL2                          EQU 0x00000290  ; Integrated Memory Controller Ch 7 Error Control 2 (R/W) [Package]
+IA32_MC17_CTL2                          EQU 0x00000291  ; Extended MC Bank 17 Error Control 2 (R/W) [Package]
+IA32_MC18_CTL2                          EQU 0x00000292  ; Extended MC Bank 18 Error Control 2 (R/W) [Package]
+IA32_MC19_CTL2                          EQU 0x00000293  ; Extended MC Bank 19 Error Control 2 (R/W) [Package]
+IA32_MC20_CTL2                          EQU 0x00000294  ; Extended MC Bank 20 Error Control 2 (R/W) [Package]
+IA32_MC21_CTL2                          EQU 0x00000295  ; Extended MC Bank 21 Error Control 2 (R/W) [Package]
+IA32_MC22_CTL2                          EQU 0x00000296  ; Extended MC Bank 22 Error Control 2 (R/W) [Package]
+IA32_MC23_CTL2                          EQU 0x00000297  ; Extended MC Bank 23 Error Control 2 (R/W) [Package]
+IA32_MC24_CTL2                          EQU 0x00000298  ; Extended MC Bank 24 Error Control 2 (R/W) [Package]
+IA32_MC25_CTL2                          EQU 0x00000299  ; Extended MC Bank 25 Error Control 2 (R/W) [Package]
+IA32_MC26_CTL2                          EQU 0x0000029A  ; Extended MC Bank 26 Error Control 2 (R/W) [Package]
+IA32_MC27_CTL2                          EQU 0x0000029B  ; Extended MC Bank 27 Error Control 2 (R/W) [Package]
+IA32_MC28_CTL2                          EQU 0x0000029C  ; Extended MC Bank 28 Error Control 2 (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Machine Check Architecture (MCA) Core Banks (5 to 11)
+; ------------------------------------------------------------------------------
+; Bank 5: Intel QPI Module
+IA32_MC5_CTL                            EQU 0x00000414  ; QPI Error Signaling Control (R/W) [Package]
+IA32_MC5_STATUS                         EQU 0x00000415  ; QPI Error Logging Status (R/W) [Package]
+IA32_MC5_ADDR                           EQU 0x00000416  ; QPI Error Reporting Address (R/W) [Package]
+IA32_MC5_MISC                           EQU 0x00000417  ; QPI Miscellaneous Error Info (R/W) [Package]
+
+; Bank 6: Integrated I/O Module
+IA32_MC6_CTL                            EQU 0x00000418  ; Integrated I/O Error Signaling Control (R/W) [Package]
+IA32_MC6_STATUS                         EQU 0x00000419  ; Integrated I/O Error Logging Status (R/W) [Package]
+IA32_MC6_ADDR                           EQU 0x0000041A  ; Integrated I/O Error Reporting Address (R/W) [Package]
+IA32_MC6_MISC                           EQU 0x0000041B  ; Integrated I/O Miscellaneous Error Info (R/W) [Package]
+
+; Bank 7: Home Agent 0
+IA32_MC7_CTL                            EQU 0x0000041C  ; Home Agent 0 Error Signaling Control (R/W) [Package]
+IA32_MC7_STATUS                         EQU 0x0000041D  ; Home Agent 0 Error Logging Status (R/W) [Package]
+IA32_MC7_ADDR                           EQU 0x0000041E  ; Home Agent 0 Error Reporting Address (R/W) [Package]
+IA32_MC7_MISC                           EQU 0x0000041F  ; Home Agent 0 Miscellaneous Error Info (R/W) [Package]
+
+; Bank 8: Home Agent 1
+IA32_MC8_CTL                            EQU 0x00000420  ; Home Agent 1 Error Signaling Control (R/W) [Package]
+IA32_MC8_STATUS                         EQU 0x00000421  ; Home Agent 1 Error Logging Status (R/W) [Package]
+IA32_MC8_ADDR                           EQU 0x00000422  ; Home Agent 1 Error Reporting Address (R/W) [Package]
+IA32_MC8_MISC                           EQU 0x00000423  ; Home Agent 1 Miscellaneous Error Info (R/W) [Package]
+
+; Bank 9: Integrated Memory Controller Channel 0
+IA32_MC9_CTL                            EQU 0x00000424  ; Memory Controller Ch 0 Error Signaling Control (R/W) [Package]
+IA32_MC9_STATUS                         EQU 0x00000425  ; Memory Controller Ch 0 Error Logging Status (R/W) [Package]
+IA32_MC9_ADDR                           EQU 0x00000426  ; Memory Controller Ch 0 Error Reporting Address (R/W) [Package]
+IA32_MC9_MISC                           EQU 0x00000427  ; Memory Controller Ch 0 Miscellaneous Error Info (R/W) [Package]
+
+; Bank 10: Integrated Memory Controller Channel 1
+IA32_MC10_CTL                           EQU 0x00000428  ; Memory Controller Ch 1 Error Signaling Control (R/W) [Package]
+IA32_MC10_STATUS                        EQU 0x00000429  ; Memory Controller Ch 1 Error Logging Status (R/W) [Package]
+IA32_MC10_ADDR                          EQU 0x0000042A  ; Memory Controller Ch 1 Error Reporting Address (R/W) [Package]
+IA32_MC10_MISC                          EQU 0x0000042B  ; Memory Controller Ch 1 Miscellaneous Error Info (R/W) [Package]
+
+; Bank 11: Integrated Memory Controller Channel 2
+IA32_MC11_CTL                           EQU 0x0000042C  ; Memory Controller Ch 2 Error Signaling Control (R/W) [Package]
+IA32_MC11_STATUS                        EQU 0x0000042D  ; Memory Controller Ch 2 Error Logging Status (R/W) [Package]
+IA32_MC11_ADDR                          EQU 0x0000042E  ; Memory Controller Ch 2 Error Reporting Address (R/W) [Package]
+
+; ==============================================================================
+; INTEL EXTENDED MCA BANKS (11-28) & DRAM RAPL POWER MSR DEFINITIONS (64-BIT)
+; ==============================================================================
+
+; ------------------------------------------------------------------------------
+; SECTION: Machine Check Architecture (MCA) - Integrated Memory Controllers (Banks 11-16)
+; ------------------------------------------------------------------------------
+; Bank 11: Memory Controller Integrated Channel 2
+IA32_MC11_MISC                          EQU 0x0000042F  ; Memory Controller Ch 2 Miscellaneous Error Info (R/W) [Package]
+
+; Bank 12: Memory Controller Integrated Channel 3
+IA32_MC12_CTL                           EQU 0x00000430  ; Memory Controller Ch 3 Error Signaling Control (R/W) [Package]
+IA32_MC12_STATUS                        EQU 0x00000431  ; Memory Controller Ch 3 Error Logging Status (R/W) [Package]
+IA32_MC12_ADDR                          EQU 0x00000432  ; Memory Controller Ch 3 Error Reporting Address (R/W) [Package]
+IA32_MC12_MISC                          EQU 0x00000433  ; Memory Controller Ch 3 Miscellaneous Error Info (R/W) [Package]
+
+; Bank 13: Memory Controller Integrated Channel 4
+IA32_MC13_CTL                           EQU 0x00000434  ; Memory Controller Ch 4 Error Signaling Control (R/W) [Package]
+IA32_MC13_STATUS                        EQU 0x00000435  ; Memory Controller Ch 4 Error Logging Status (R/W) [Package]
+IA32_MC13_ADDR                          EQU 0x00000436  ; Memory Controller Ch 4 Error Reporting Address (R/W) [Package]
+IA32_MC13_MISC                          EQU 0x00000437  ; Memory Controller Ch 4 Miscellaneous Error Info (R/W) [Package]
+
+; Bank 14: Memory Controller Integrated Channel 5
+IA32_MC14_CTL                           EQU 0x00000438  ; Memory Controller Ch 5 Error Signaling Control (R/W) [Package]
+IA32_MC14_STATUS                        EQU 0x00000439  ; Memory Controller Ch 5 Error Logging Status (R/W) [Package]
+IA32_MC14_ADDR                          EQU 0x0000043A  ; Memory Controller Ch 5 Error Reporting Address (R/W) [Package]
+IA32_MC14_MISC                          EQU 0x0000043B  ; Memory Controller Ch 5 Miscellaneous Error Info (R/W) [Package]
+
+; Bank 15: Memory Controller Integrated Channel 6
+IA32_MC15_CTL                           EQU 0x0000043C  ; Memory Controller Ch 6 Error Signaling Control (R/W) [Package]
+IA32_MC15_STATUS                        EQU 0x0000043D  ; Memory Controller Ch 6 Error Logging Status (R/W) [Package]
+IA32_MC15_ADDR                          EQU 0x0000043E  ; Memory Controller Ch 6 Error Reporting Address (R/W) [Package]
+IA32_MC15_MISC                          EQU 0x0000043F  ; Memory Controller Ch 6 Miscellaneous Error Info (R/W) [Package]
+
+; Bank 16: Memory Controller Integrated Channel 7
+IA32_MC16_CTL                           EQU 0x00000440  ; Memory Controller Ch 7 Error Signaling Control (R/W) [Package]
+IA32_MC16_STATUS                        EQU 0x00000441  ; Memory Controller Ch 7 Error Logging Status (R/W) [Package]
+IA32_MC16_ADDR                          EQU 0x00000442  ; Memory Controller Ch 7 Error Reporting Address (R/W) [Package]
+IA32_MC16_MISC                          EQU 0x00000443  ; Memory Controller Ch 7 Miscellaneous Error Info (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Machine Check Architecture (MCA) - CBo Broadcast & L3 Cache Slices (Banks 17-28)
+; ------------------------------------------------------------------------------
+; Bank 17: CBo Broadcast & L3 Slice 0
+IA32_MC17_CTL                           EQU 0x00000444  ; L3 Slice 0 Error Signaling Control (R/W) [Package]
+IA32_MC17_STATUS                        EQU 0x00000445  ; L3 Slice 0 Error Logging Status (R/W) [Package]
+IA32_MC17_ADDR                          EQU 0x00000446  ; L3 Slice 0 Error Reporting Address (R/W) [Package]
+IA32_MC17_MISC                          EQU 0x00000447  ; L3 Slice 0 Miscellaneous Error Info (R/W) [Package]
+
+; Bank 18: CBo Broadcast & L3 Slice 1
+IA32_MC18_CTL                           EQU 0x00000448  ; L3 Slice 1 Error Signaling Control (R/W) [Package]
+IA32_MC18_STATUS                        EQU 0x00000449  ; L3 Slice 1 Error Logging Status (R/W) [Package]
+IA32_MC18_ADDR                          EQU 0x0000044A  ; L3 Slice 1 Error Reporting Address (R/W) [Package]
+IA32_MC18_MISC                          EQU 0x0000044B  ; L3 Slice 1 Miscellaneous Error Info (R/W) [Package]
+
+; Bank 19: CBo Broadcast & L3 Slice 2
+IA32_MC19_CTL                           EQU 0x0000044C  ; L3 Slice 2 Error Signaling Control (R/W) [Package]
+IA32_MC19_STATUS                        EQU 0x0000044D  ; L3 Slice 2 Error Logging Status (R/W) [Package]
+IA32_MC19_ADDR                          EQU 0x0000044E  ; L3 Slice 2 Error Reporting Address (R/W) [Package]
+IA32_MC19_MISC                          EQU 0x0000044F  ; L3 Slice 2 Miscellaneous Error Info (R/W) [Package]
+
+; Bank 20: CBo Broadcast & L3 Slice 3
+IA32_MC20_CTL                           EQU 0x00000450  ; L3 Slice 3 Error Signaling Control (R/W) [Package]
+IA32_MC20_STATUS                        EQU 0x00000451  ; L3 Slice 3 Error Logging Status (R/W) [Package]
+IA32_MC20_ADDR                          EQU 0x00000452  ; L3 Slice 3 Error Reporting Address (R/W) [Package]
+IA32_MC20_MISC                          EQU 0x00000453  ; L3 Slice 3 Miscellaneous Error Info (R/W) [Package]
+
+; Bank 21: CBo Broadcast & L3 Slice 4
+IA32_MC21_CTL                           EQU 0x00000454  ; L3 Slice 4 Error Signaling Control (R/W) [Package]
+IA32_MC21_STATUS                        EQU 0x00000455  ; L3 Slice 4 Error Logging Status (R/W) [Package]
+IA32_MC21_ADDR                          EQU 0x00000456  ; L3 Slice 4 Error Reporting Address (R/W) [Package]
+IA32_MC21_MISC                          EQU 0x00000457  ; L3 Slice 4 Miscellaneous Error Info (R/W) [Package]
+
+; Bank 22: CBo Broadcast & L3 Slice 5
+IA32_MC22_CTL                           EQU 0x00000458  ; L3 Slice 5 Error Signaling Control (R/W) [Package]
+IA32_MC22_STATUS                        EQU 0x00000459  ; L3 Slice 5 Error Logging Status (R/W) [Package]
+IA32_MC22_ADDR                          EQU 0x0000045A  ; L3 Slice 5 Error Reporting Address (R/W) [Package]
+IA32_MC22_MISC                          EQU 0x0000045B  ; L3 Slice 5 Miscellaneous Error Info (R/W) [Package]
+
+; Bank 23: CBo Broadcast & L3 Slice 6
+IA32_MC23_CTL                           EQU 0x0000045C  ; L3 Slice 6 Error Signaling Control (R/W) [Package]
+IA32_MC23_STATUS                        EQU 0x0000045D  ; L3 Slice 6 Error Logging Status (R/W) [Package]
+IA32_MC23_ADDR                          EQU 0x0000045E  ; L3 Slice 6 Error Reporting Address (R/W) [Package]
+IA32_MC23_MISC                          EQU 0x0000045F  ; L3 Slice 6 Miscellaneous Error Info (R/W) [Package]
+
+; Bank 24: CBo Broadcast & L3 Slice 7
+IA32_MC24_CTL                           EQU 0x00000460  ; L3 Slice 7 Error Signaling Control (R/W) [Package]
+IA32_MC24_STATUS                        EQU 0x00000461  ; L3 Slice 7 Error Logging Status (R/W) [Package]
+IA32_MC24_ADDR                          EQU 0x00000462  ; L3 Slice 7 Error Reporting Address (R/W) [Package]
+IA32_MC24_MISC                          EQU 0x00000463  ; L3 Slice 7 Miscellaneous Error Info (R/W) [Package]
+
+; Bank 25: CBo Broadcast & L3 Slice 8
+IA32_MC25_CTL                           EQU 0x00000464  ; L3 Slice 8 Error Signaling Control (R/W) [Package]
+IA32_MC25_STATUS                        EQU 0x00000465  ; L3 Slice 8 Error Logging Status (R/W) [Package]
+IA32_MC25_ADDR                          EQU 0x00000466  ; L3 Slice 8 Error Reporting Address (R/W) [Package]
+IA32_MC25_MISC                          EQU 0x00000467  ; L3 Slice 8 Miscellaneous Error Info (R/W) [Package]
+
+; Bank 26: CBo Broadcast & L3 Slice 9
+IA32_MC26_CTL                           EQU 0x00000468  ; L3 Slice 9 Error Signaling Control (R/W) [Package]
+IA32_MC26_STATUS                        EQU 0x00000469  ; L3 Slice 9 Error Logging Status (R/W) [Package]
+IA32_MC26_ADDR                          EQU 0x0000046A  ; L3 Slice 9 Error Reporting Address (R/W) [Package]
+IA32_MC26_MISC                          EQU 0x0000046B  ; L3 Slice 9 Miscellaneous Error Info (R/W) [Package]
+
+; Bank 27: CBo Broadcast & L3 Slice 10
+IA32_MC27_CTL                           EQU 0x0000046C  ; L3 Slice 10 Error Signaling Control (R/W) [Package]
+IA32_MC27_STATUS                        EQU 0x0000046D  ; L3 Slice 10 Error Logging Status (R/W) [Package]
+IA32_MC27_ADDR                          EQU 0x0000046E  ; L3 Slice 10 Error Reporting Address (R/W) [Package]
+IA32_MC27_MISC                          EQU 0x0000046F  ; L3 Slice 10 Miscellaneous Error Info (R/W) [Package]
+
+; Bank 28: CBo Broadcast & L3 Slice 11
+IA32_MC28_CTL                           EQU 0x00000470  ; L3 Slice 11 Error Signaling Control (R/W) [Package]
+IA32_MC28_STATUS                        EQU 0x00000471  ; L3 Slice 11 Error Logging Status (R/W) [Package]
+IA32_MC28_ADDR                          EQU 0x00000472  ; L3 Slice 11 Error Reporting Address (R/W) [Package]
+IA32_MC28_MISC                          EQU 0x00000473  ; L3 Slice 11 Miscellaneous Error Info (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Package Power & DRAM RAPL Power Domains
+; ------------------------------------------------------------------------------
+MSR_PKG_PERF_STATUS                     EQU 0x00000613  ; Package RAPL Performance Status (R/O - Read Only) [Package]
+MSR_DRAM_POWER_LIMIT                    EQU 0x00000618  ; DRAM RAPL Power Limit Control (R/W) [Package]
+MSR_DRAM_ENERGY_STATUS                  EQU 0x00000619  ; DRAM Energy Status Counter (R/O) [Package]
+MSR_DRAM_PERF_STATUS                    EQU 0x0000061B  ; DRAM Performance Throttling Status (R/O) [Package]
+MSR_DRAM_POWER_INFO                     EQU 0x0000061C  ; DRAM RAPL Parameter Information (R/W) [Package]
+MSR_PP0_ENERGY_STATUS                   EQU 0x00000639  ; PP0 Plane Energy Status Counter (R/O) [Package]
+
+; ==============================================================================
+; INTEL FEATURE CONTROL, GLOBAL MCA, AND MAXIMUM MCA BANKS (29-31) DEFINITIONS
+; ==============================================================================
+
+; ------------------------------------------------------------------------------
+; SECTION: Core Execution & Feature Control
+; ------------------------------------------------------------------------------
+IA32_FEATURE_CONTROL                    EQU 0x0000003A  ; Control Features in Intel 64 Processor / Lock Bit (R/W) [Thread]
+
+; ------------------------------------------------------------------------------
+; SECTION: Global Machine Check Architecture (MCA) Capabilities & Status
+; ------------------------------------------------------------------------------
+IA32_MCG_CAP                            EQU 0x00000179  ; Global Machine Check Capability Register (R/O - Read Only) [Thread]
+IA32_MCG_STATUS                         EQU 0x0000017A  ; Global Machine Check Status Register (R/WO - Read/Write Once / Bit 1 Lock) [Thread]
+
+; ------------------------------------------------------------------------------
+; SECTION: Turbo Overclocking Restrictions
+; ------------------------------------------------------------------------------
+MSR_TURBO_RATIO_LIMIT1                  EQU 0x000001AE  ; Maximum Core Ratio Limit for Turbo Mode (R/O or R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Machine Check Architecture (MCA) Error Control 2 Banks (29 to 31)
+; ------------------------------------------------------------------------------
+IA32_MC29_CTL2                          EQU 0x0000029D  ; L3 Slice 12 Error Control 2 (R/W) [Package]
+IA32_MC30_CTL2                          EQU 0x0000029E  ; L3 Slice 13 Error Control 2 (R/W) [Package]
+IA32_MC31_CTL2                          EQU 0x0000029F  ; L3 Slice 14 Error Control 2 (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Processor Event Based Sampling (PEBS) Facility
+; ------------------------------------------------------------------------------
+IA32_PEBS_ENABLE                        EQU 0x000003F1  ; Processor Event Based Sampling Enable Register (R/W) [Thread]
+
+; ------------------------------------------------------------------------------
+; SECTION: Machine Check Architecture (MCA) Core Banks (6, 29, 30, 31)
+; ------------------------------------------------------------------------------
+; Bank 6 Miscellaneous Info
+IA32_MC6_MISC                           EQU 0x0000041B  ; Integrated I/O Miscellaneous MAC Information (R/O) [Package]
+
+; Bank 29: CBo Broadcast & L3 Slice 12
+IA32_MC29_CTL                           EQU 0x00000474  ; L3 Slice 12 Error Signaling Control (R/W) [Package]
+IA32_MC29_STATUS                        EQU 0x00000475  ; L3 Slice 12 Error Logging Status (R/W) [Package]
+IA32_MC29_ADDR                          EQU 0x00000476  ; L3 Slice 12 Error Reporting Address (R/W) [Package]
+IA32_MC29_MISC                          EQU 0x00000477  ; L3 Slice 12 Miscellaneous Error Info (R/W) [Package]
+
+; Bank 30: CBo Broadcast & L3 Slice 13
+IA32_MC30_CTL                           EQU 0x00000478  ; L3 Slice 13 Error Signaling Control (R/W) [Package]
+IA32_MC30_STATUS                        EQU 0x00000479  ; L3 Slice 13 Error Logging Status (R/W) [Package]
+IA32_MC30_ADDR                          EQU 0x0000047A  ; L3 Slice 13 Error Reporting Address (R/W) [Package]
+IA32_MC30_MISC                          EQU 0x0000047B  ; L3 Slice 13 Miscellaneous Error Info (R/W) [Package]
+
+; Bank 31: CBo Broadcast & L3 Slice 14
+IA32_MC31_CTL                           EQU 0x0000047C  ; L3 Slice 14 Error Signaling Control (R/W) [Package]
+IA32_MC31_STATUS                        EQU 0x0000047D  ; L3 Slice 14 Error Logging Status (R/W) [Package]
+IA32_MC31_ADDR                          EQU 0x0000047E  ; L3 Slice 14 Error Reporting Address (R/W) [Package]
+IA32_MC31_MISC                          EQU 0x0000047F  ; L3 Slice 14 Miscellaneous Error Info (R/W) [Package]
+
+; ==============================================================================
+; INTEL UNCORE GLOBAL, FILTER1 EXTENSIONS, AND HIGH C-BANKS (8-14) DEFINITIONS
+; ==============================================================================
+
+; ------------------------------------------------------------------------------
+; SECTION: Uncore Perfmon Per-Socket Global Control & Status
+; ------------------------------------------------------------------------------
+MSR_PMON_GLOBAL_CTL                     EQU 0x00000C00  ; Uncore Perfmon Per-Socket Global Control (R/W) [Package]
+MSR_PMON_GLOBAL_STATUS                  EQU 0x00000C01  ; Uncore Perfmon Per-Socket Global Status (R/O - Read Only) [Package]
+MSR_PMON_GLOBAL_CONFIG                  EQU 0x00000C06  ; Uncore Perfmon Per-Socket Global Configuration (R/W) [Package]
+MSR_U_PMON_BOX_STATUS                   EQU 0x00000C15  ; Uncore U-box Perfmon U-Box Wide Status (R/O) [Package]
+MSR_PCU_PMON_BOX_STATUS                  EQU 0x00000C35  ; Uncore PCU Perfmon Box Wide Status (R/O) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Uncore C-Box 0-7 Extended Box Wide Filter1 Registers
+; ------------------------------------------------------------------------------
+MSR_C0_PMON_BOX_FILTER1                 EQU 0x00000D1A  ; Uncore C-Box 0 Perfmon Box Wide Filter1 (R/W) [Package]
+MSR_C1_PMON_BOX_FILTER1                 EQU 0x00000D3A  ; Uncore C-Box 1 Perfmon Box Wide Filter1 (R/W) [Package]
+MSR_C2_PMON_BOX_FILTER1                 EQU 0x00000D5A  ; Uncore C-Box 2 Perfmon Box Wide Filter1 (R/W) [Package]
+MSR_C3_PMON_BOX_FILTER1                 EQU 0x00000D7A  ; Uncore C-Box 3 Perfmon Box Wide Filter1 (R/W) [Package]
+MSR_C4_PMON_BOX_FILTER1                 EQU 0x00000D9A  ; Uncore C-Box 4 Perfmon Box Wide Filter1 (R/W) [Package]
+MSR_C5_PMON_BOX_FILTER1                 EQU 0x00000DBA  ; Uncore C-Box 5 Perfmon Box Wide Filter1 (R/W) [Package]
+MSR_C6_PMON_BOX_FILTER1                 EQU 0x00000DDA  ; Uncore C-Box 6 Perfmon Box Wide Filter1 (R/W) [Package]
+MSR_C7_PMON_BOX_FILTER1                 EQU 0x00000DFA  ; Uncore C-Box 7 Perfmon Box Wide Filter1 (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Uncore C-Box 8 Performance Monitoring MSRs
+; ------------------------------------------------------------------------------
+MSR_C8_PMON_BOX_CTL                     EQU 0x00000E04  ; Uncore C-Box 8 Local Box Wide Control (R/W) [Package]
+MSR_C8_PMON_EVNTSEL0                    EQU 0x00000E10  ; Uncore C-Box 8 Event Select Counter 0 (R/W) [Package]
+MSR_C8_PMON_EVNTSEL1                    EQU 0x00000E11  ; Uncore C-Box 8 Event Select Counter 1 (R/W) [Package]
+MSR_C8_PMON_EVNTSEL2                    EQU 0x00000E12  ; Uncore C-Box 8 Event Select Counter 2 (R/W) [Package]
+MSR_C8_PMON_EVNTSEL3                    EQU 0x00000E13  ; Uncore C-Box 8 Event Select Counter 3 (R/W) [Package]
+MSR_C8_PMON_BOX_FILTER                  EQU 0x00000E14  ; Uncore C-Box 8 Box Wide Filter (R/W) [Package]
+MSR_C8_PMON_CTR0                        EQU 0x00000E16  ; Uncore C-Box 8 Performance Counter 0 (R/W) [Package]
+MSR_C8_PMON_CTR1                        EQU 0x00000E17  ; Uncore C-Box 8 Performance Counter 1 (R/W) [Package]
+MSR_C8_PMON_CTR2                        EQU 0x00000E18  ; Uncore C-Box 8 Performance Counter 2 (R/W) [Package]
+MSR_C8_PMON_CTR3                        EQU 0x00000E19  ; Uncore C-Box 8 Performance Counter 3 (R/W) [Package]
+MSR_C8_PMON_BOX_FILTER1                 EQU 0x00000E1A  ; Uncore C-Box 8 Box Wide Filter1 (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Uncore C-Box 9 Performance Monitoring MSRs
+; ------------------------------------------------------------------------------
+MSR_C9_PMON_BOX_CTL                     EQU 0x00000E24  ; Uncore C-Box 9 Local Box Wide Control (R/W) [Package]
+MSR_C9_PMON_EVNTSEL0                    EQU 0x00000E30  ; Uncore C-Box 9 Event Select Counter 0 (R/W) [Package]
+MSR_C9_PMON_EVNTSEL1                    EQU 0x00000E31  ; Uncore C-Box 9 Event Select Counter 1 (R/W) [Package]
+MSR_C9_PMON_EVNTSEL2                    EQU 0x00000E32  ; Uncore C-Box 9 Event Select Counter 2 (R/W) [Package]
+MSR_C9_PMON_EVNTSEL3                    EQU 0x00000E33  ; Uncore C-Box 9 Event Select Counter 3 (R/W) [Package]
+MSR_C9_PMON_BOX_FILTER                  EQU 0x00000E34  ; Uncore C-Box 9 Box Wide Filter (R/W) [Package]
+MSR_C9_PMON_CTR0                        EQU 0x00000E36  ; Uncore C-Box 9 Performance Counter 0 (R/W) [Package]
+MSR_C9_PMON_CTR1                        EQU 0x00000E37  ; Uncore C-Box 9 Performance Counter 1 (R/W) [Package]
+MSR_C9_PMON_CTR2                        EQU 0x00000E38  ; Uncore C-Box 9 Performance Counter 2 (R/W) [Package]
+MSR_C9_PMON_CTR3                        EQU 0x00000E39  ; Uncore C-Box 9 Performance Counter 3 (R/W) [Package]
+MSR_C9_PMON_BOX_FILTER1                 EQU 0x00000E3A  ; Uncore C-Box 9 Box Wide Filter1 (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Uncore C-Box 10 Performance Monitoring MSRs
+; ------------------------------------------------------------------------------
+MSR_C10_PMON_BOX_CTL                    EQU 0x00000E44  ; Uncore C-Box 10 Local Box Wide Control (R/W) [Package]
+MSR_C10_PMON_EVNTSEL0                   EQU 0x00000E50  ; Uncore C-Box 10 Event Select Counter 0 (R/W) [Package]
+MSR_C10_PMON_EVNTSEL1                   EQU 0x00000E51  ; Uncore C-Box 10 Event Select Counter 1 (R/W) [Package]
+MSR_C10_PMON_EVNTSEL2                   EQU 0x00000E52  ; Uncore C-Box 10 Event Select Counter 2 (R/W) [Package]
+MSR_C10_PMON_EVNTSEL3                   EQU 0x00000E53  ; Uncore C-Box 10 Event Select Counter 3 (R/W) [Package]
+MSR_C10_PMON_BOX_FILTER                 EQU 0x00000E54  ; Uncore C-Box 10 Box Wide Filter (R/W) [Package]
+MSR_C10_PMON_CTR0                       EQU 0x00000E56  ; Uncore C-Box 10 Performance Counter 0 (R/W) [Package]
+MSR_C10_PMON_CTR1                       EQU 0x00000E57  ; Uncore C-Box 10 Performance Counter 1 (R/W) [Package]
+MSR_C10_PMON_CTR2                       EQU 0x00000E58  ; Uncore C-Box 10 Performance Counter 2 (R/W) [Package]
+MSR_C10_PMON_CTR3                       EQU 0x00000E59  ; Uncore C-Box 10 Performance Counter 3 (R/W) [Package]
+MSR_C10_PMON_BOX_FILTER1                EQU 0x00000E5A  ; Uncore C-Box 10 Box Wide Filter1 (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Uncore C-Box 11 Performance Monitoring MSRs
+; ------------------------------------------------------------------------------
+MSR_C11_PMON_BOX_CTL                    EQU 0x00000E64  ; Uncore C-Box 11 Local Box Wide Control (R/W) [Package]
+MSR_C11_PMON_EVNTSEL0                   EQU 0x00000E70  ; Uncore C-Box 11 Event Select Counter 0 (R/W) [Package]
+MSR_C11_PMON_EVNTSEL1                   EQU 0x00000E71  ; Uncore C-Box 11 Event Select Counter 1 (R/W) [Package]
+MSR_C11_PMON_EVNTSEL2                   EQU 0x00000E72  ; Uncore C-Box 11 Event Select Counter 2 (R/W) [Package]
+MSR_C11_PMON_EVNTSEL3                   EQU 0x00000E73  ; Uncore C-Box 11 Event Select Counter 3 (R/W) [Package]
+MSR_C11_PMON_BOX_FILTER                 EQU 0x00000E74  ; Uncore C-Box 11 Box Wide Filter (R/W) [Package]
+MSR_C11_PMON_CTR0                       EQU 0x00000E76  ; Uncore C-Box 11 Performance Counter 0 (R/W) [Package]
+MSR_C11_PMON_CTR1                       EQU 0x00000E77  ; Uncore C-Box 11 Performance Counter 1 (R/W) [Package]
+MSR_C11_PMON_CTR2                       EQU 0x00000E78  ; Uncore C-Box 11 Performance Counter 2 (R/W) [Package]
+MSR_C11_PMON_CTR3                       EQU 0x00000E79  ; Uncore C-Box 11 Performance Counter 3 (R/W) [Package]
+MSR_C11_PMON_BOX_FILTER1                EQU 0x00000E7A  ; Uncore C-Box 11 Box Wide Filter1 (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Uncore C-Box 12 Performance Monitoring MSRs
+; ------------------------------------------------------------------------------
+MSR_C12_PMON_BOX_CTL                    EQU 0x00000E84  ; Uncore C-Box 12 Local Box Wide Control (R/W) [Package]
+MSR_C12_PMON_EVNTSEL0                   EQU 0x00000E90  ; Uncore C-Box 12 Event Select Counter 0 (R/W) [Package]
+MSR_C12_PMON_EVNTSEL1                   EQU 0x00000E91  ; Uncore C-Box 12 Event Select Counter 1 (R/W) [Package]
+MSR_C12_PMON_EVNTSEL2                   EQU 0x00000E92  ; Uncore C-Box 12 Event Select Counter 2 (R/W) [Package]
+MSR_C12_PMON_EVNTSEL3                   EQU 0x00000E93  ; Uncore C-Box 12 Event Select Counter 3 (R/W) [Package]
+MSR_C12_PMON_BOX_FILTER                 EQU 0x00000E94  ; Uncore C-Box 12 Box Wide Filter (R/W) [Package]
+MSR_C12_PMON_CTR0                       EQU 0x00000E96  ; Uncore C-Box 12 Performance Counter 0 (R/W) [Package]
+MSR_C12_PMON_CTR1                       EQU 0x00000E97  ; Uncore C-Box 12 Performance Counter 1 (R/W) [Package]
+MSR_C12_PMON_CTR2                       EQU 0x00000E98  ; Uncore C-Box 12 Performance Counter 2 (R/W) [Package]
+MSR_C12_PMON_CTR3                       EQU 0x00000E99  ; Uncore C-Box 12 Performance Counter 3 (R/W) [Package]
+MSR_C12_PMON_BOX_FILTER1                EQU 0x00000E9A  ; Uncore C-Box 12 Box Wide Filter1 (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Uncore C-Box 13 Performance Monitoring MSRs
+; ------------------------------------------------------------------------------
+MSR_C13_PMON_BOX_CTL                    EQU 0x00000EA4  ; Uncore C-Box 13 Local Box Wide Control (R/W) [Package]
+MSR_C13_PMON_EVNTSEL0                   EQU 0x00000EB0  ; Uncore C-Box 13 Event Select Counter 0 (R/W) [Package]
+MSR_C13_PMON_EVNTSEL1                   EQU 0x00000EB1  ; Uncore C-Box 13 Event Select Counter 1 (R/W) [Package]
+MSR_C13_PMON_EVNTSEL2                   EQU 0x00000EB2  ; Uncore C-Box 13 Event Select Counter 2 (R/W) [Package]
+MSR_C13_PMON_EVNTSEL3                   EQU 0x00000EB3  ; Uncore C-Box 13 Event Select Counter 3 (R/W) [Package]
+MSR_C13_PMON_BOX_FILTER                 EQU 0x00000EB4  ; Uncore C-Box 13 Box Wide Filter (R/W) [Package]
+MSR_C13_PMON_CTR0                       EQU 0x00000EB6  ; Uncore C-Box 13 Performance Counter 0 (R/W) [Package]
+MSR_C13_PMON_CTR1                       EQU 0x00000EB7  ; Uncore C-Box 13 Performance Counter 1 (R/W) [Package]
+MSR_C13_PMON_CTR2                       EQU 0x00000EB8  ; Uncore C-Box 13 Performance Counter 2 (R/W) [Package]
+MSR_C13_PMON_CTR3                       EQU 0x00000EB9  ; Uncore C-Box 13 Performance Counter 3 (R/W) [Package]
+MSR_C13_PMON_BOX_FILTER1                EQU 0x00000EBA  ; Uncore C-Box 13 Box Wide Filter1 (R/W) [Package]
+; ------------------------------------------------------------------------------
+; SECTION: Uncore C-Box 14 Performance Monitoring MSRs
+; ------------------------------------------------------------------------------
+MSR_C14_PMON_BOX_CTL                    EQU 0x00000EC4  ; Uncore C-Box 14 Local Box Wide Control (R/W) [Package]
+MSR_C14_PMON_EVNTSEL0                   EQU 0x00000ED0  ; Uncore C-Box 14 Event Select Counter 0 (R/W) [Package]
+MSR_C14_PMON_EVNTSEL1                   EQU 0x00000ED1  ; Uncore C-Box 14 Event Select Counter 1 (R/W) [Package]
+MSR_C14_PMON_EVNTSEL2                   EQU 0x00000ED2  ; Uncore C-Box 14 Event Select Counter 2 (R/W) [Package]
+MSR_C14_PMON_EVNTSEL3                   EQU 0x00000ED3  ; Uncore C-Box 14 Event Select Counter 3 (R/W) [Package]
+MSR_C14_PMON_BOX_FILTER                 EQU 0x00000ED4  ; Uncore C-Box 14 Box Wide Filter (R/W) [Package]
+MSR_C14_PMON_CTR0                       EQU 0x00000ED6  ; Uncore C-Box 14 Performance Counter 0 (R/W) [Package]
+MSR_C14_PMON_CTR1                       EQU 0x00000ED7  ; Uncore C-Box 14 Performance Counter 1 (R/W) [Package]
+MSR_C14_PMON_CTR2                       EQU 0x00000ED8  ; Uncore C-Box 14 Performance Counter 2 (R/W) [Package]
+MSR_C14_PMON_CTR3                       EQU 0x00000ED9  ; Uncore C-Box 14 Performance Counter 3 (R/W) [Package]
+MSR_C14_PMON_BOX_FILTER1                EQU 0x00000EDA  ; Uncore C-Box 14 Box Wide Filter1 (R/W) [Package]
+
+; ==============================================================================
+; INTEL TSC ADJUST, PERFEVTSEL (WITH TSX), AND VMX VMFUNC MSR DEFINITIONS (64-BIT)
+; ==============================================================================
+
+; ------------------------------------------------------------------------------
+; SECTION: Time Stamp Counter (TSC) & Platform Information
+; ------------------------------------------------------------------------------
+IA32_TSC_ADJUST                         EQU 0x0000003B  ; Per-Logical-Processor TSC Adjust Register (R/W) [Thread]
+MSR_PLATFORM_INFO                       EQU 0x000000CE  ; Platform Information and Feature Enumeration (R/O - Read Only) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Architectural Performance Event Select MSRs (With TSX Filtering)
+; ------------------------------------------------------------------------------
+IA32_PERFEVTSEL0                        EQU 0x00000186  ; Performance Event Select for Counter 0 (R/W) [Thread]
+IA32_PERFEVTSEL1                        EQU 0x00000187  ; Performance Event Select for Counter 1 (R/W) [Thread]
+IA32_PERFEVTSEL2                        EQU 0x00000188  ; Performance Event Select for Counter 2 (R/W) [Thread]
+IA32_PERFEVTSEL3                        EQU 0x00000189  ; Performance Event Select for Counter 3 (R/W) [Thread]
+
+; ------------------------------------------------------------------------------
+; SECTION: Debug Store & Execution Profiling Filters
+; ------------------------------------------------------------------------------
+MSR_LBR_SELECT                          EQU 0x000001C8  ; Last Branch Record Filtering Select Register (R/W) [Thread]
+IA32_DEBUGCTL                           EQU 0x000001D9  ; Debug Control Register (R/W) [Thread]
+
+; ------------------------------------------------------------------------------
+; SECTION: VMX Advanced Capability Reporting
+; ------------------------------------------------------------------------------
+IA32_VMX_VMFUNC                         EQU 0x00000491  ; Capability Reporting Register of VM-Function Controls (R/O) [Thread]
+
+; ------------------------------------------------------------------------------
+; SECTION: Package C-State Latency and Interrupt Response Limits (IRTL)
+; ------------------------------------------------------------------------------
+MSR_PKGC_IRTL1                          EQU 0x0000060B  ; Package C6/C7 Interrupt Response Limit 1 (R/W) [Package]
+MSR_PKGC_IRTL2                          EQU 0x0000060C  ; Package C6/C7 Interrupt Response Limit 2 (R/W) [Package]
+
+; ==============================================================================
+; INTEL RAPL, SILICON DEBUG, AND SMM MCA CAPABILITY MSR DEFINITIONS (64-BIT)
+; ==============================================================================
+
+; ------------------------------------------------------------------------------
+; SECTION: SMM Extended Capabilities
+; ------------------------------------------------------------------------------
+MSR_SMM_MCA_CAP                         EQU 0x0000017D  ; Enhanced SMM Capabilities (SMM-RO / Accessible only in SMM) [Thread]
+
+; ------------------------------------------------------------------------------
+; SECTION: Power Management & C-State Control
+; ------------------------------------------------------------------------------
+MSR_PKG_CST_CONFIG_CONTROL              EQU 0x000000E2  ; C-State Configuration Control Register (R/W) [Core]
+MSR_PKG_PERF_STATUS                     EQU 0x00000613  ; Package Performance Status (R/O - Read Only) [Package]
+MSR_DRAM_ENERGY_STATUS                  EQU 0x00000619  ; DRAM Energy Consumption Status Counter (R/O) [Package]
+MSR_DRAM_PERF_STATUS                    EQU 0x0000061B  ; DRAM Performance Throttling Status (R/O) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Configurable TDP (Thermal Design Power) Control MSRs
+; ------------------------------------------------------------------------------
+MSR_CONFIG_TDP_NOMINAL                  EQU 0x00000648  ; Base TDP Ratio Profile (R/O) [Package]
+MSR_CONFIG_TDP_LEVEL1                   EQU 0x00000649  ; ConfigTDP Level 1 Ratio and Power Level (R/O) [Package]
+MSR_CONFIG_TDP_LEVEL2                   EQU 0x0000064A  ; ConfigTDP Level 2 Ratio and Power Level (R/O) [Package]
+MSR_CONFIG_TDP_CONTROL                  EQU 0x0000064B  ; ConfigTDP Ratio & Frequency Profile Control (R/W) [Package]
+MSR_TURBO_ACTIVATION_RATIO              EQU 0x0000064C  ; Turbo Activation Ratio Control (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Silicon Debug and Hardware Tracing
+; ------------------------------------------------------------------------------
+IA32_DEBUG_INTERFACE                    EQU 0x00000C80  ; Silicon Debug Feature Control Register (R/W) [Package]
+
+; ==============================================================================
+; INTEL UNCORE GLOBAL PMU, ENHANCED SMM CONTROL & FREQUENCY LIMIT MSR DEFINITIONS
+; ==============================================================================
+
+; ------------------------------------------------------------------------------
+; SECTION: Turbo Overclocking Profiles
+; ------------------------------------------------------------------------------
+MSR_TURBO_RATIO_LIMIT                   EQU 0x000001AD  ; Maximum Ratio Limit of Turbo Mode (R/O or R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Uncore PMU Global & Configuration Facilities
+; ------------------------------------------------------------------------------
+MSR_UNC_PERF_GLOBAL_CTRL                EQU 0x00000391  ; Uncore PMU Global Control Register (R/W) [Package]
+MSR_UNC_PERF_GLOBAL_STATUS              EQU 0x00000392  ; Uncore PMU Main Status Register (R/O - Read Only) [Package]
+MSR_UNC_PERF_FIXED_CTRL                 EQU 0x00000394  ; Uncore Fixed Counter Control (R/W) [Package]
+MSR_UNC_PERF_FIXED_CTR                  EQU 0x00000395  ; Uncore Fixed Counter Register (R/W) [Package]
+MSR_UNC_CBO_CONFIG                      EQU 0x00000396  ; Uncore C-Box Configuration Information (R/O) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Uncore Arbiter Unit (ARB) MSRs
+; ------------------------------------------------------------------------------
+MSR_UNC_ARB_PERFCTR0                    EQU 0x000003B0  ; Uncore Arbiter Performance Counter 0 (R/W) [Package]
+MSR_UNC_ARB_PERFCTR1                    EQU 0x000003B1  ; Uncore Arbiter Performance Counter 1 (R/W) [Package]
+MSR_UNC_ARB_PERFEVTSEL0                 EQU 0x000003B2  ; Uncore Arbiter Counter 0 Event Select MSR (R/W) [Package]
+MSR_UNC_ARB_PERFEVTSEL1                 EQU 0x000003B3  ; Uncore Arbiter Counter 1 Event Select MSR (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Enhanced SMM Architectural Control MSRs (SMM Lock-Protected)
+; ------------------------------------------------------------------------------
+MSR_SMM_FEATURE_CONTROL                 EQU 0x000004E0  ; Enhanced SMM Feature Control Register (SMM-RW / Only in SMM) [Package]
+MSR_SMM_DELAYED                         EQU 0x000004E2  ; SMM Delayed Execution Monitor (SMM-RO / Only in SMM) [Package]
+MSR_SMM_BLOCKED                         EQU 0x000004E3  ; SMM Blocked State Monitor (SMM-RO / Only in SMM) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Package Power, RAPL Limits & Frequency Restrictions
+; ------------------------------------------------------------------------------
+MSR_RAPL_POWER_UNIT                     EQU 0x00000606  ; Unit Multipliers used in RAPL Interfaces (R/O) [Package]
+MSR_PP0_ENERGY_STATUS                   EQU 0x00000639  ; PP0 Plane Energy Status Counter (R/O) [Package]
+MSR_PP1_POWER_LIMIT                     EQU 0x00000640  ; PP1 RAPL Power Limit Control (R/W) [Package]
+MSR_PP1_ENERGY_STATUS                   EQU 0x00000641  ; PP1 Energy Status Counter (R/O) [Package]
+MSR_PP1_POLICY                          EQU 0x00000642  ; PP1 Balance Policy Control (R/W) [Package]
+MSR_CORE_PERF_LIMIT_REASONS             EQU 0x00000690  ; Indicator of Frequency Clipping / Throttling in Processor Cores (R/W) [Package]
+
+; ==============================================================================
+; INTEL FREQUENCY LIMIT REASONS & UNCORE C-BOX 0-3 PMU DEFINITIONS (64-BIT)
+; ==============================================================================
+
+; ------------------------------------------------------------------------------
+; SECTION: Graphics & Ring Interconnect Frequency Throttling Reasons
+; ------------------------------------------------------------------------------
+MSR_GRAPHICS_PERF_LIMIT_REASONS        EQU 0x000006B0  ; Indicator of Frequency Clipping in Processor Graphics (R/W) [Package]
+MSR_RING_PERF_LIMIT_REASONS            EQU 0x000006B1  ; Indicator of Frequency Clipping in the Ring Interconnect (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Uncore C-Box 0 Performance Monitoring MSRs
+; ------------------------------------------------------------------------------
+MSR_UNC_CBO_0_PERFEVTSEL0               EQU 0x00000700  ; Uncore C-Box 0 Counter 0 Event Select MSR (R/W) [Package]
+MSR_UNC_CBO_0_PERFEVTSEL1               EQU 0x00000701  ; Uncore C-Box 0 Counter 1 Event Select MSR (R/W) [Package]
+MSR_UNC_CBO_0_PERFCTR0                  EQU 0x00000706  ; Uncore C-Box 0 Performance Counter 0 (R/W) [Package]
+MSR_UNC_CBO_0_PERFCTR1                  EQU 0x00000707  ; Uncore C-Box 0 Performance Counter 1 (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Uncore C-Box 1 Performance Monitoring MSRs
+; ------------------------------------------------------------------------------
+MSR_UNC_CBO_1_PERFEVTSEL0               EQU 0x00000710  ; Uncore C-Box 1 Counter 0 Event Select MSR (R/W) [Package]
+MSR_UNC_CBO_1_PERFEVTSEL1               EQU 0x00000711  ; Uncore C-Box 1 Counter 1 Event Select MSR (R/W) [Package]
+MSR_UNC_CBO_1_PERFCTR0                  EQU 0x00000716  ; Uncore C-Box 1 Performance Counter 0 (R/W) [Package]
+MSR_UNC_CBO_1_PERFCTR1                  EQU 0x00000717  ; Uncore C-Box 1 Performance Counter 1 (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Uncore C-Box 2 Performance Monitoring MSRs
+; ------------------------------------------------------------------------------
+MSR_UNC_CBO_2_PERFEVTSEL0               EQU 0x00000720  ; Uncore C-Box 2 Counter 0 Event Select MSR (R/W) [Package]
+MSR_UNC_CBO_2_PERFEVTSEL1               EQU 0x00000721  ; Uncore C-Box 2 Counter 1 Event Select MSR (R/W) [Package]
+MSR_UNC_CBO_2_PERFCTR0                  EQU 0x00000726  ; Uncore C-Box 2 Performance Counter 0 (R/W) [Package]
+MSR_UNC_CBO_2_PERFCTR1                  EQU 0x00000727  ; Uncore C-Box 2 Performance Counter 1 (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Uncore C-Box 3 Performance Monitoring MSRs
+; ------------------------------------------------------------------------------
+MSR_UNC_CBO_3_PERFEVTSEL0               EQU 0x00000730  ; Uncore C-Box 3 Counter 0 Event Select MSR (R/W) [Package]
+MSR_UNC_CBO_3_PERFEVTSEL1               EQU 0x00000731  ; Uncore C-Box 3 Counter 1 Event Select MSR (R/W) [Package]
+MSR_UNC_CBO_3_PERFCTR0                  EQU 0x00000736  ; Uncore C-Box 3 Performance Counter 0 (R/W) [Package]
+MSR_UNC_CBO_3_PERFCTR1                  EQU 0x00000737  ; Uncore C-Box 3 Performance Counter 1 (R/W) [Package]
+
+; ==============================================================================
+; INTEL HIGH PACKAGE C-STATE RESIDENCY MSR DEFINITIONS (64-BIT)
+; ==============================================================================
+
+; ------------------------------------------------------------------------------
+; SECTION: Power Management & C-State Configuration
+; ------------------------------------------------------------------------------
+MSR_PKG_CST_CONFIG_CONTROL              EQU 0x000000E2  ; C-State Configuration Control Register (R/W) [Core]
+
+; ------------------------------------------------------------------------------
+; SECTION: High Package C-State Residency Counters (R/O - Read Only)
+; ------------------------------------------------------------------------------
+MSR_PKG_C8_RESIDENCY                    EQU 0x00000630  ; Package C8 Residency Counter (TSC Frequency) [Package]
+MSR_PKG_C9_RESIDENCY                    EQU 0x00000631  ; Package C9 Residency Counter (TSC Frequency) [Package]
+MSR_PKG_C10_RESIDENCY                   EQU 0x00000632  ; Package C10 Residency Counter (TSC Frequency) [Package]
+
+; ==============================================================================
+; INTEL TOPOLOGY, CONTROL, TURBO LIMITS & MCA BANKS 5-9 MSR DEFINITIONS (64-BIT)
+; ==============================================================================
+
+; ------------------------------------------------------------------------------
+; SECTION: Processor Topology & Thread Identification
+; ------------------------------------------------------------------------------
+MSR_CORE_THREAD_COUNT                   EQU 0x00000035  ; Enabled Core and Logical Processor Count (R/O - Read Only) [Package]
+MSR_THREAD_ID_INFO                      EQU 0x00000053  ; Hardware Assigned Logical Processor ID (R/O) [Thread]
+
+; ------------------------------------------------------------------------------
+; SECTION: Platform Configuration, Capabilities & SMM
+; ------------------------------------------------------------------------------
+MSR_PKG_CST_CONFIG_CONTROL              EQU 0x000000E2  ; C-State Configuration Control Register (R/W) [Core]
+IA32_MCG_CAP                            EQU 0x00000179  ; Global Machine Check Capability Register (R/O) [Thread]
+MSR_SMM_MCA_CAP                         EQU 0x0000017D  ; Enhanced SMM Capabilities (SMM-RO / Accessible only in SMM) [Thread]
+MSR_ERROR_CONTROL                       EQU 0x0000017F  ; Machine Check Bank Error Configuration Register (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Turbo Overclocking Profiles
+; ------------------------------------------------------------------------------
+MSR_TURBO_RATIO_LIMIT                   EQU 0x000001AD  ; Maximum Ratio Limit of Turbo Mode (R/O or R/W) [Package]
+MSR_TURBO_RATIO_LIMIT1                  EQU 0x000001AE  ; Maximum Core Ratio Limit for Turbo Mode (R/O or R/W) [Package]
+MSR_TURBO_RATIO_LIMIT2                  EQU 0x000001AF  ; Secondary Core Ratio Limit for Turbo Mode (R/O or R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Machine Check Architecture (MCA) Core Banks (5 to 9)
+; ------------------------------------------------------------------------------
+; Bank 5: Intel QPI 0 Module
+IA32_MC5_CTL                            EQU 0x00000414  ; QPI 0 Error Signaling Control (R/W) [Package]
+IA32_MC5_STATUS                         EQU 0x00000415  ; QPI 0 Error Logging Status (R/W) [Package]
+IA32_MC5_ADDR                           EQU 0x00000416  ; QPI 0 Error Reporting Address (R/W) [Package]
+IA32_MC5_MISC                           EQU 0x00000417  ; QPI 0 Miscellaneous Error Info (R/W) [Package]
+
+; Bank 6: Integrated I/O Module
+IA32_MC6_CTL                            EQU 0x00000418  ; Integrated I/O Error Signaling Control (R/W) [Package]
+IA32_MC6_STATUS                         EQU 0x00000419  ; Integrated I/O Error Logging Status (R/W) [Package]
+IA32_MC6_ADDR                           EQU 0x0000041A  ; Integrated I/O Error Reporting Address (R/W) [Package]
+IA32_MC6_MISC                           EQU 0x0000041B  ; Integrated I/O Miscellaneous Error Info (R/W) [Package]
+
+; Bank 7: Home Agent HA 0
+IA32_MC7_CTL                            EQU 0x0000041C  ; Home Agent HA 0 Error Signaling Control (R/W) [Package]
+IA32_MC7_STATUS                         EQU 0x0000041D  ; Home Agent HA 0 Error Logging Status (R/W) [Package]
+IA32_MC7_ADDR                           EQU 0x0000041E  ; Home Agent HA 0 Error Reporting Address (R/W) [Package]
+IA32_MC7_MISC                           EQU 0x0000041F  ; Home Agent HA 0 Miscellaneous Error Info (R/W) [Package]
+
+; Bank 8: Home Agent HA 1
+IA32_MC8_CTL                            EQU 0x00000420  ; Home Agent HA 1 Error Signaling Control (R/W) [Package]
+IA32_MC8_STATUS                         EQU 0x00000421  ; Home Agent HA 1 Error Logging Status (R/W) [Package]
+IA32_MC8_ADDR                           EQU 0x00000422  ; Home Agent HA 1 Error Reporting Address (R/W) [Package]
+IA32_MC8_MISC                           EQU 0x00000423  ; Home Agent HA 1 Miscellaneous Error Info (R/W) [Package]
+
+; Bank 9: Integrated Memory Controller Channel 0
+IA32_MC9_CTL                            EQU 0x00000424  ; Memory Controller Ch 0 Error Signaling Control (R/W) [Package]
+IA32_MC9_STATUS                         EQU 0x00000425  ; Memory Controller Ch 0 Error Logging Status (R/W) [Package]
+IA32_MC9_ADDR                           EQU 0x00000426  ; Memory Controller Ch 0 Error Reporting Address (R/W) [Package]
+IA32_MC9_MISC                           EQU 0x00000427  ; Memory Controller Ch 0 Miscellaneous Error Info (R/W) [Package]
+
+; ==============================================================================
+; INTEL EXTENDED MCA BANKS (10-21) & RAPL POWER UNIT DEFINITIONS (64-BIT)
+; ==============================================================================
+
+; ------------------------------------------------------------------------------
+; SECTION: Machine Check Architecture (MCA) - Integrated Memory Controllers (Banks 10-16)
+; ------------------------------------------------------------------------------
+; Bank 10: Integrated Memory Controller Channel 1
+IA32_MC10_CTL                           EQU 0x00000428  ; Memory Controller Ch 1 Error Signaling Control (R/W) [Package]
+IA32_MC10_STATUS                        EQU 0x00000429  ; Memory Controller Ch 1 Error Logging Status (R/W) [Package]
+IA32_MC10_ADDR                          EQU 0x0000042A  ; Memory Controller Ch 1 Error Reporting Address (R/W) [Package]
+IA32_MC10_MISC                          EQU 0x0000042B  ; Memory Controller Ch 1 Miscellaneous Error Info (R/W) [Package]
+
+; Bank 11: Integrated Memory Controller Channel 2
+IA32_MC11_CTL                           EQU 0x0000042C  ; Memory Controller Ch 2 Error Signaling Control (R/W) [Package]
+IA32_MC11_STATUS                        EQU 0x0000042D  ; Memory Controller Ch 2 Error Logging Status (R/W) [Package]
+IA32_MC11_ADDR                          EQU 0x0000042E  ; Memory Controller Ch 2 Error Reporting Address (R/W) [Package]
+IA32_MC11_MISC                          EQU 0x0000042F  ; Memory Controller Ch 2 Miscellaneous Error Info (R/W) [Package]
+
+; Bank 12: Integrated Memory Controller Channel 3
+IA32_MC12_CTL                           EQU 0x00000430  ; Memory Controller Ch 3 Error Signaling Control (R/W) [Package]
+IA32_MC12_STATUS                        EQU 0x00000431  ; Memory Controller Ch 3 Error Logging Status (R/W) [Package]
+IA32_MC12_ADDR                          EQU 0x00000432  ; Memory Controller Ch 3 Error Reporting Address (R/W) [Package]
+IA32_MC12_MISC                          EQU 0x00000433  ; Memory Controller Ch 3 Miscellaneous Error Info (R/W) [Package]
+
+; Bank 13: Integrated Memory Controller Channel 4
+IA32_MC13_CTL                           EQU 0x00000434  ; Memory Controller Ch 4 Error Signaling Control (R/W) [Package]
+IA32_MC13_STATUS                        EQU 0x00000435  ; Memory Controller Ch 4 Error Logging Status (R/W) [Package]
+IA32_MC13_ADDR                          EQU 0x00000436  ; Memory Controller Ch 4 Error Reporting Address (R/W) [Package]
+IA32_MC13_MISC                          EQU 0x00000437  ; Memory Controller Ch 4 Miscellaneous Error Info (R/W) [Package]
+
+; Bank 14: Integrated Memory Controller Channel 5
+IA32_MC14_CTL                           EQU 0x00000438  ; Memory Controller Ch 5 Error Signaling Control (R/W) [Package]
+IA32_MC14_STATUS                        EQU 0x00000439  ; Memory Controller Ch 5 Error Logging Status (R/W) [Package]
+IA32_MC14_ADDR                          EQU 0x0000043A  ; Memory Controller Ch 5 Error Reporting Address (R/W) [Package]
+IA32_MC14_MISC                          EQU 0x0000043B  ; Memory Controller Ch 5 Miscellaneous Error Info (R/W) [Package]
+
+; Bank 15: Integrated Memory Controller Channel 6
+IA32_MC15_CTL                           EQU 0x0000043C  ; Memory Controller Ch 6 Error Signaling Control (R/W) [Package]
+IA32_MC15_STATUS                        EQU 0x0000043D  ; Memory Controller Ch 6 Error Logging Status (R/W) [Package]
+IA32_MC15_ADDR                          EQU 0x0000043E  ; Memory Controller Ch 6 Error Reporting Address (R/W) [Package]
+IA32_MC15_MISC                          EQU 0x0000043F  ; Memory Controller Ch 6 Miscellaneous Error Info (R/W) [Package]
+
+; Bank 16: Integrated Memory Controller Channel 7
+IA32_MC16_CTL                           EQU 0x00000440  ; Memory Controller Ch 7 Error Signaling Control (R/W) [Package]
+IA32_MC16_STATUS                        EQU 0x00000441  ; Memory Controller Ch 7 Error Logging Status (R/W) [Package]
+IA32_MC16_ADDR                          EQU 0x00000442  ; Memory Controller Ch 7 Error Reporting Address (R/W) [Package]
+IA32_MC16_MISC                          EQU 0x00000443  ; Memory Controller Ch 7 Miscellaneous Error Info (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Machine Check Architecture (MCA) - CBo/L3 Cache Slice Pairs (Banks 17-19)
+; ------------------------------------------------------------------------------
+; Bank 17: CBo0, CBo3, CBo6, CBo9, CBo12, CBo15 Slices
+IA32_MC17_CTL                           EQU 0x00000444  ; CBo Pair Group 0 Error Signaling Control (R/W) [Package]
+IA32_MC17_STATUS                        EQU 0x00000445  ; CBo Pair Group 0 Error Logging Status (R/W) [Package]
+IA32_MC17_ADDR                          EQU 0x00000446  ; CBo Pair Group 0 Error Reporting Address (R/W) [Package]
+IA32_MC17_MISC                          EQU 0x00000447  ; CBo Pair Group 0 Miscellaneous Error Info (R/W) [Package]
+
+; Bank 18: CBo1, CBo4, CBo7, CBo10, CBo13, CBo16 Slices
+IA32_MC18_CTL                           EQU 0x00000448  ; CBo Pair Group 1 Error Signaling Control (R/W) [Package]
+IA32_MC18_STATUS                        EQU 0x00000449  ; CBo Pair Group 1 Error Logging Status (R/W) [Package]
+IA32_MC18_ADDR                          EQU 0x0000044A  ; CBo Pair Group 1 Error Reporting Address (R/W) [Package]
+IA32_MC18_MISC                          EQU 0x0000044B  ; CBo Pair Group 1 Miscellaneous Error Info (R/W) [Package]
+
+; Bank 19: CBo2, CBo5, CBo8, CBo11, CBo14, CBo17 Slices
+IA32_MC19_CTL                           EQU 0x0000044C  ; CBo Pair Group 2 Error Signaling Control (R/W) [Package]
+IA32_MC19_STATUS                        EQU 0x0000044D  ; CBo Pair Group 2 Error Logging Status (R/W) [Package]
+IA32_MC19_ADDR                          EQU 0x0000044E  ; CBo Pair Group 2 Error Reporting Address (R/W) [Package]
+IA32_MC19_MISC                          EQU 0x0000044F  ; CBo Pair Group 2 Miscellaneous Error Info (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Machine Check Architecture (MCA) - Intel QPI Interconnect Modules (Banks 20-21)
+; ------------------------------------------------------------------------------
+; Bank 20: Intel QPI 1 Module
+IA32_MC20_CTL                           EQU 0x00000450  ; Intel QPI 1 Error Signaling Control (R/W) [Package]
+IA32_MC20_STATUS                        EQU 0x00000451  ; Intel QPI 1 Error Logging Status (R/W) [Package]
+IA32_MC20_ADDR                          EQU 0x00000452  ; Intel QPI 1 Error Reporting Address (R/W) [Package]
+IA32_MC20_MISC                          EQU 0x00000453  ; Intel QPI 1 Miscellaneous Error Info (R/W) [Package]
+
+; Bank 21: Intel QPI 2 Module
+IA32_MC21_CTL                           EQU 0x00000454  ; Intel QPI 2 Error Signaling Control (R/W) [Package]
+IA32_MC21_STATUS                        EQU 0x00000455  ; Intel QPI 2 Error Logging Status (R/W) [Package]
+IA32_MC21_ADDR                          EQU 0x00000456  ; Intel QPI 2 Error Reporting Address (R/W) [Package]
+IA32_MC21_MISC                          EQU 0x00000457  ; Intel QPI 2 Miscellaneous Error Info (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: RAPL Power Units Global Constants
+; ------------------------------------------------------------------------------
+MSR_RAPL_POWER_UNIT                     EQU 0x00000606  ; Unit Multipliers Used in RAPL Interfaces (R/O - Read Only) [Package]
+
+; ==============================================================================
+; INTEL DRAM RAPL, UNCORE LIMITS, AND RDT/CMT MONITORING MSR DEFINITIONS (64-BIT)
+; ==============================================================================
+
+; ------------------------------------------------------------------------------
+; SECTION: Package Power & DRAM RAPL Power Domains
+; ------------------------------------------------------------------------------
+MSR_DRAM_POWER_LIMIT                    EQU 0x00000618  ; DRAM RAPL Power Limit Control (R/W) [Package]
+MSR_DRAM_ENERGY_STATUS                  EQU 0x00000619  ; DRAM Energy Consumption Status Counter (R/O - Read Only) [Package]
+MSR_DRAM_PERF_STATUS                    EQU 0x0000061B  ; DRAM Performance Throttling Status (R/O) [Package]
+MSR_DRAM_POWER_INFO                     EQU 0x0000061C  ; DRAM RAPL Parameter Ranges (R/W) [Package]
+MSR_PP0_ENERGY_STATUS                   EQU 0x00000639  ; Reserved Energy Status / Always Returns 0 (R/O) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Bus, Uncore Ratio Limits & Core Performance Reasons
+; ------------------------------------------------------------------------------
+MSR_PCIE_PLL_RATIO                      EQU 0x0000061E  ; Configuration of PCIE PLL Relative to BCLK (R/W) [Package]
+MSR_UNCORE_RATIO_LIMIT                  EQU 0x00000620  ; Uncore Minimum and Maximum Ratio Limits (R/W) [Package]
+MSR_CORE_PERF_LIMIT_REASONS             EQU 0x00000690  ; Indicator of Frequency Clipping in Processor Cores (R/W) [Package]
+
+; ------------------------------------------------------------------------------
+; SECTION: Intel Resource Director Technology (RDT) / Cache Monitoring (CMT)
+; ------------------------------------------------------------------------------
+IA32_QM_EVTSEL                          EQU 0x00000C8D  ; Quality Monitoring Event Select Register (R/W) [Thread]
+IA32_QM_CTR                             EQU 0x00000C8E  ; Quality Monitoring Counter Register (R/O) [Thread]
+IA32_PQR_ASSOC                          EQU 0x00000C8F  ; Resource Association Register / RMID Assignment (R/W) [Thread]
+
+;tommorow: https://github.com/llnl/msr-genie/blob/main/Intel_MSR_Tables/2-33.txt
+
+
+;links to the projects that I used to do all of it:
+; https://github.com/llnl/msr-genie/tree/main/Intel_MSR_Tables
+; https://gist.github.com/wbenny/d0fdb53425de2641e207b8c4ef672cbc
+
+
