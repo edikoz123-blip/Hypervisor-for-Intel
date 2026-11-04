@@ -8,7 +8,7 @@ boot_start:
     mov ds, ax 
     mov gs, ax 
     mov fs, ax 
-    mov sp, 0x9000                 
+    mov sp, 0x7C00                 
 
     mov di, 0x4000            
     mov cx, 256                
@@ -16,7 +16,7 @@ boot_start:
     rep stosb      
 
 load_kernel:                    
-    mov ax, 0x0440              
+    mov ax, 0x0600              
     mov es, ax
     xor bx, bx                  
 
@@ -45,7 +45,7 @@ boot_middle:
     mov es, ax
     mov ss, ax
 
-    in al, 0x92        
+    in al, 0x92                    ; A20 activated
     or al, 2           
     out 0x92, al
 
@@ -54,12 +54,24 @@ boot_middle:
     xor eax, eax
     rep stosd
 
-    mov dword [0x1000], 0x2003     ; PML4 (0x1000) -> PDPT
-    mov dword [0x2000], 0x3003     ; PDPT (0x2000) -> PD
-    mov dword [0x3000], 0x4003 ; PD (0x3000) -> PT
-    mov dword [0x3008], 0x5003 ; PT -> 1
-    mov dword [0x6008], 0x6003 ; PT -> 2
-    
+    mov dword [0x1000], 0x2003     ; PML4 (0x1000) 
+    mov dword [0x2000], 0x3003     ; PDPT (0x2000) 
+    mov dword [0x3000], 0x4003     ; PD (0x3000) 
+
+    ;PD -> PT we creating the pages of PT not 2MB
+    mov edx, 0x4000
+    mov eax, 0x5003
+    mov ecx, 8
+
+loop_Start_Mapping:
+    mov dword [edx], eax
+    add edx, 4
+    add eax, 0x1000
+    dec ecx 
+    cmp ecx, 0
+    je switch_to_long_mode
+    jmp loop_Start_Mapping
+
 switch_to_long_mode:
     mov eax, 0x1000             
     mov cr3, eax                
@@ -91,9 +103,9 @@ init_lm:
     mov rsp, 0x1FFFF0            
     mov rbp, rsp                
 
-    mov rax, 0x4400
+    mov rax, 0x6000
     jmp rax  
-                   
+; Working 100% on Qemu
 align 8                         
 gdt_start:
     dq 0x0                      
