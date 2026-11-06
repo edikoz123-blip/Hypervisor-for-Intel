@@ -3840,10 +3840,8 @@ IA32_MCU_CONTROL                    EQU 0x00001406 ; Microcode Update hardware e
 
 
 
-;tommorow: https://github.com/llnl/msr-genie/blob/main/Intel_MSR_Tables/2-33.txt
 
-
-;links to the projects that I used to do all of it:
+;links to the projects that I used to do all the MSRS:
 ; https://github.com/llnl/msr-genie/tree/main/Intel_MSR_Tables
 ; https://gist.github.com/wbenny/d0fdb53425de2641e207b8c4ef672cbc
 
