@@ -120,9 +120,7 @@ IA32_MCG_STATUS             equ 0x17A   ; Global Machine Check Status Register
 ; ------------------------------------------------------------------------------
 ; 16-Bit Control Fields
 ; ------------------------------------------------------------------------------
-VMCS_CTRL_VIRTUAL_PROCESSOR_IDENTIFIER  EQU 0x00000000
-VMCS_CTRL_POSTED_INTERRUPT_NOTI_VECTOR  EQU 0x00000002
-VMCS_CTRL_EPTP_INDEX                    EQU 0x00000004
+VMCS_CTRL_VIRTUAL_PROCESSOR_IDENTIFIER  EQU 0x00000000 ; Didnt got used
 
 ; ------------------------------------------------------------------------------
 ; 16-Bit Guest State Fields
@@ -135,7 +133,6 @@ VMCS_GUEST_FS_SELECTOR                  EQU 0x00000808
 VMCS_GUEST_GS_SELECTOR                  EQU 0x0000080A
 VMCS_GUEST_LDTR_SELECTOR                EQU 0x0000080C
 VMCS_GUEST_TR_SELECTOR                  EQU 0x0000080E
-VMCS_GUEST_PML_INDEX                    EQU 0x00000812
 
 ; ------------------------------------------------------------------------------
 ; 16-Bit Host State Fields
@@ -169,10 +166,9 @@ VMCS_CTRL_EOI_EXIT_BITMAP_0             EQU 0x0000201C
 VMCS_CTRL_EOI_EXIT_BITMAP_1             EQU 0x0000201E
 VMCS_CTRL_EOI_EXIT_BITMAP_2             EQU 0x00002020
 VMCS_CTRL_EOI_EXIT_BITMAP_3             EQU 0x00002022
-VMCS_CTRL_EPT_POINTER_LIST_ADDRESS      EQU 0x00002024
 VMCS_CTRL_VMREAD_BITMAP_ADDRESS         EQU 0x00002026
 VMCS_CTRL_VMWRITE_BITMAP_ADDRESS        EQU 0x00002028
-VMCS_CTRL_VIRT_EXCEPTION_INFO_ADDRESS   EQU 0x0000202A
+VMCS_CTRL_VIRT_EXCEPTION_INFO_ADDRESS   EQU 0x0000202A ; Didnt got used
 VMCS_CTRL_XSS_EXITING_BITMAP            EQU 0x0000202C
 VMCS_CTRL_ENCLS_EXITING_BITMAP          EQU 0x0000202E
 VMCS_CTRL_TSC_MULTIPLIER                EQU 0x00002032
@@ -180,7 +176,7 @@ VMCS_CTRL_TSC_MULTIPLIER                EQU 0x00002032
 ; ------------------------------------------------------------------------------
 ; 64-Bit Read-Only Data Fields (VM-Exit Information)
 ; ------------------------------------------------------------------------------
-VMCS_GUEST_PHYSICAL_ADDRESS             EQU 0x00002400
+VMCS_GUEST_PHYSICAL_ADDRESS             EQU 0x00002400 ; Didnt got used
 
 ; ------------------------------------------------------------------------------
 ; 64-Bit Guest State Fields
@@ -198,8 +194,8 @@ VMCS_GUEST_PDPTE3                       EQU 0x00002810
 ; ------------------------------------------------------------------------------
 ; 64-Bit Host State Fields
 ; ------------------------------------------------------------------------------
-VMCS_HOST_PAT                           EQU 0x00002C00
-
+VMCS_HOST_PAT                           EQU 0x00002C00 ; Didnt got used
+ 
 ; ==============================================================================
 ; INTEL VMCS COMPONENT ENCODING DEFINITIONS (PART 3)
 ; ==============================================================================
@@ -210,26 +206,19 @@ VMCS_HOST_PAT                           EQU 0x00002C00
 VMCS_CTRL_PIN_BASED_VM_EXECUTION_CONTROLS       EQU 0x00004000
 VMCS_CTRL_PROCESSOR_BASED_VM_EXECUTION_CONTROLS EQU 0x00004002
 VMCS_CTRL_EXCEPTION_BITMAP                      EQU 0x00004004
-VMCS_CTRL_PAGEFAULT_ERROR_CODE_MASK             EQU 0x00004006
-VMCS_CTRL_PAGEFAULT_ERROR_CODE_MATCH            EQU 0x00004008
-VMCS_CTRL_CR3_TARGET_COUNT                      EQU 0x0000400A
 VMCS_CTRL_VMEXIT_CONTROLS                       EQU 0x0000400C
 VMCS_CTRL_VMEXIT_MSR_STORE_COUNT                EQU 0x0000400E
 VMCS_CTRL_VMEXIT_MSR_LOAD_COUNT                 EQU 0x00004010
 VMCS_CTRL_VMENTRY_CONTROLS                      EQU 0x00004012
 VMCS_CTRL_VMENTRY_MSR_LOAD_COUNT                EQU 0x00004014
-VMCS_CTRL_VMENTRY_INTERRUPTION_INFO_FIELD       EQU 0x00004016
+VMCS_CTRL_VMENTRY_INTERRUPTION_INFO_FIELD       EQU 0x00004016 ; Didnt got used
 VMCS_CTRL_VMENTRY_EXCEPTION_ERROR_CODE          EQU 0x00004018
 VMCS_CTRL_VMENTRY_INSTRUCTION_LENGTH            EQU 0x0000401A
-VMCS_CTRL_TPR_THRESHOLD                         EQU 0x0000401C
-VMCS_CTRL_SECONDARY_PROC_BASED_VM_EXEC_CONTROLS EQU 0x0000401E
-VMCS_CTRL_PLE_GAP                               EQU 0x00004020
-VMCS_CTRL_PLE_WINDOW                            EQU 0x00004022
 
 ; ------------------------------------------------------------------------------
-; 32-Bit Read-Only Data Fields (VM-Exit Information)
+; 32-Bit Read-Only Data Fields (VM-Exit Information) Didnt got used
 ; ------------------------------------------------------------------------------
-VMCS_VM_INSTRUCTION_ERROR                       EQU 0x00004400
+VMCS_VM_INSTRUCTION_ERROR                       EQU 0x00004400 
 VMCS_EXIT_REASON                                EQU 0x00004402
 VMCS_VMEXIT_INTERRUPTION_INFORMATION            EQU 0x00004404
 VMCS_VMEXIT_INTERRUPTION_ERROR_CODE             EQU 0x00004406
@@ -255,19 +244,19 @@ VMCS_GUEST_FS_LIMIT                             EQU 0x00004808
 ; ------------------------------------------------------------------------------
 ; 32-Bit Guest & Host State Fields
 ; ------------------------------------------------------------------------------
-VMCS_GUEST_LDTR_ACCESS_RIGHTS           EQU 0x00004820
-VMCS_GUEST_TR_ACCESS_RIGHTS             EQU 0x00004822
+VMCS_GUEST_LDTR_ACCESS_RIGHTS           EQU 0x00004820 ; Didnt got used
+VMCS_GUEST_TR_ACCESS_RIGHTS             EQU 0x00004822 ; didnt got used
 VMCS_GUEST_INTERRUPTIBILITY_STATE       EQU 0x00004824
 VMCS_GUEST_ACTIVITY_STATE               EQU 0x00004826
 VMCS_GUEST_SMBASE                       EQU 0x00004828
 VMCS_GUEST_SYSENTER_CS                  EQU 0x0000482A
-VMCS_GUEST_VMX_PREEMPTION_TIMER_VALUE   EQU 0x0000482E
+VMCS_GUEST_VMX_PREEMPTION_TIMER_VALUE   EQU 0x0000482E ; didnt got used
 VMCS_HOST_SYSENTER_CS                   EQU 0x00004C00
 
 ; ------------------------------------------------------------------------------
 ; Natural Width Control Fields
 ; ------------------------------------------------------------------------------
-VMCS_CTRL_CR0_GUEST_HOST_MASK           EQU 0x00006000
+VMCS_CTRL_CR0_GUEST_HOST_MASK           EQU 0x00006000 ; they all didnt get used
 VMCS_CTRL_CR4_GUEST_HOST_MASK           EQU 0x00006002
 VMCS_CTRL_CR0_READ_SHADOW               EQU 0x00006004
 VMCS_CTRL_CR4_READ_SHADOW               EQU 0x00006006
@@ -279,7 +268,7 @@ VMCS_CTRL_CR3_TARGET_VALUE_3            EQU 0x0000600E
 ; ------------------------------------------------------------------------------
 ; Natural Width Read-Only Data Fields (VM-Exit Information)
 ; ------------------------------------------------------------------------------
-VMCS_EXIT_QUALIFICATION                 EQU 0x00006400
+VMCS_EXIT_QUALIFICATION                 EQU 0x00006400 ; you can use it to get info
 VMCS_VMEXIT_IO_RCX                      EQU 0x00006402
 VMCS_VMEXIT_IO_RSX                      EQU 0x00006404
 VMCS_VMEXIT_IO_RDI                      EQU 0x00006406
@@ -289,7 +278,7 @@ VMCS_EXIT_GUEST_LINEAR_ADDRESS          EQU 0x0000640A
 ; ------------------------------------------------------------------------------
 ; Natural Width Guest State Fields (Bases & Registers)
 ; ------------------------------------------------------------------------------
-VMCS_GUEST_CR0                          EQU 0x00006800
+VMCS_GUEST_CR0                          EQU 0x00006800 ; the CRS didnt got used
 VMCS_GUEST_CR3                          EQU 0x00006802
 VMCS_GUEST_CR4                          EQU 0x00006804
 VMCS_GUEST_ES_BASE                      EQU 0x00006806
@@ -338,6 +327,7 @@ VMCS_HOST_SYSENTER_ESP                  EQU 0x00006C10
 VMCS_HOST_SYSENTER_EIP                  EQU 0x00006C12
 VMCS_HOST_RSP                           EQU 0x00006C14
 VMCS_HOST_RIP                           EQU 0x00006C16
+VMCS_GUEST_TR_LIMIT                     EQU 0x0000481C ; 32-Bit Guest TR Limit control register encoding
 
 ; ==============================================================================
 ; INTEL VMX GUEST CET (CONTROL-FLOW ENFORCEMENT TECHNOLOGY) FIELD ENCODINGS
@@ -352,63 +342,63 @@ VMCS_GUEST_INTR_SSP_TABLE                       EQU 0x00006870 ; Natural-Width G
 ; ==============================================================================
 
 ; ------------------------------------------------------------------------------
-; 16-Bit Control Fields (Advanced Virtualization)
+; 16-Bit Control Fields (Advanced Virtualization) ; didnt got used
 ; ------------------------------------------------------------------------------
 VMCS_CTRL_GUEST_CORE_ID                 EQU 0x00000006 ; Guest Core Tracking Index
 
 ; ------------------------------------------------------------------------------
 ; 64-Bit Control Fields (Tertiary Controls & Extended Paging)
 ; ------------------------------------------------------------------------------
-VMCS_CTRL_TERTIARY_VM_EXEC_CONTROLS     EQU 0x00002034 ; CRITICAL: Tertiary Execution Bitmask pointer
+VMCS_CTRL_TERTIARY_VM_EXEC_CONTROLS     EQU 0x00002034 ; CRITICAL: Tertiary Execution Bitmask pointer (Didnt got used)
 VMCS_CTRL_HLAT_POINTER                  EQU 0x00002040 ; Hypervisor-Managed Linear Address Translation Pointer
-VMCS_CTRL_PASID_TRANSLATION_TABLE       EQU 0x00002042 ; Linear address space tracking association table
+VMCS_CTRL_PASID_TRANSLATION_TABLE       EQU 0x00002042 ; Linear address space tracking association table (Didnt got used)
 
 ; ------------------------------------------------------------------------------
 ; 64-Bit Guest State Fields (Advanced Security / Protection Keys)
 ; ------------------------------------------------------------------------------
-VMCS_GUEST_IA32_PKRU                    EQU 0x00002812 ; Guest Protection Key Register for User Pages
-VMCS_GUEST_IA32_PASID                   EQU 0x00002814 ; Guest Process Address Space ID MSR tracking
+VMCS_GUEST_IA32_PKRU                    EQU 0x00002812 ; Guest Protection Key Register for User Pages 
+VMCS_GUEST_IA32_PASID                   EQU 0x00002814 ; Guest Process Address Space ID MSR tracking (all of them didnt got used)
 VMCS_GUEST_SHARED_VIRT_MEM_POINTER      EQU 0x00002816 ; Shared Virtual Memory Pointer block
 
 ; ------------------------------------------------------------------------------
 ; 64-Bit Host State Fields (Advanced Security / Protection Keys)
 ; ------------------------------------------------------------------------------
-VMCS_HOST_IA32_PKRS                    EQU 0x00002C06 ; Host Supervisor Protection Key tracking register
+VMCS_HOST_IA32_PKRS                    EQU 0x00002C06 ; Host Supervisor Protection Key tracking register (didnt got used)
 
 ; ------------------------------------------------------------------------------
 ; 32-Bit Control Fields (Tertiary, Virtual Interrupts & Exceptions)
 ; ------------------------------------------------------------------------------
 VMCS_CTRL_TERTIARY_PROC_BASED_CONTROLS  EQU 0x0000402A ; Tertiary Processor-Based Execution Controls Bitmask
-VMCS_CTRL_NOTIFY_WINDOW                 EQU 0x0000402C ; Notification window for VM-Exits
-VMCS_CTRL_VIRTUAL_INTERRUPT_DELIVERY    EQU 0x0000401E ; Advanced APIC virtualization control bit
-VMCS_CTRL_SPECULATION_CTRL_BITMAP       EQU 0x00004030 ; Hard intercepts for guest mitigation commands
+VMCS_CTRL_NOTIFY_WINDOW                 EQU 0x0000402C ; Notification window for VM-Exits (didnt got used)
+VMCS_CTRL_SECONDARY_VM_EXEC_CONTROLS    EQU 0x0000401E ; 32-Bit Secondary Processor-Based Execution Profile
+VMCS_CTRL_SPECULATION_CTRL_BITMAP       EQU 0x00004030 ; Hard intercepts for guest mitigation commands (didnt got used)
 
 ; ------------------------------------------------------------------------------
 ; 32-Bit VM-Exit Information Fields (Extended Logging Telemetry)
 ; ------------------------------------------------------------------------------
-VMCS_VMEXIT_MTF_QUALIFICATION           EQU 0x00004410 ; Monitor Trap Flag debug status detail
-VMCS_VMEXIT_TERTIARY_EXIT_REASON        EQU 0x00004412 ; Detailed classification for tertiary exit conditions
+VMCS_VMEXIT_MTF_QUALIFICATION           EQU 0x00004410 ; Monitor Trap Flag debug status detail (didnt got used)
+VMCS_VMEXIT_TERTIARY_EXIT_REASON        EQU 0x00004412 ; Detailed classification for tertiary exit conditions (didnt got used)
 
 ; ------------------------------------------------------------------------------
 ; Natural Width Control & State Fields (Advanced Shadow Pages)
 ; ------------------------------------------------------------------------------
-VMCS_CTRL_HLAT_RESERVED_SHADOW          EQU 0x00006010 ; Shadow verification vector for secure paging layers
-VMCS_GUEST_IA32_S_CET_BASE              EQU 0x00006828 ; Guest Supervisor Mode CET Shadow Stack base pointer
-VMCS_HOST_IA32_S_CET_BASE               EQU 0x00006C18 ; Host Supervisor Mode CET Shadow Stack base pointer
+VMCS_CTRL_HLAT_RESERVED_SHADOW          EQU 0x00006010 ; Shadow verification vector for secure paging layers (didnt got used)
+VMCS_GUEST_IA32_S_CET_BASE              EQU 0x00006828 ; Guest Supervisor Mode CET Shadow Stack base pointer (didnt got used)
+VMCS_HOST_IA32_S_CET_BASE               EQU 0x00006C18 ; Host Supervisor Mode CET Shadow Stack base pointer  (didnt got used)
 
 ; ==============================================================================
 ; INTEL VMCS FINAL ARCHITECTURAL COMPONENTS (100% EXHAUSTIVE COMPLETION)
 ; ==============================================================================
 
 ; --- 16-Bit Control Fields (Advanced APIC & Virtualization Tracking) ---
-VMCS_CTRL_POSTED_INTERRUPT_STATUS_VECTOR        EQU 0x00000002 ; Overlapped interrupt notification vector
+VMCS_CTRL_POSTED_INTERRUPT_STATUS_VECTOR        EQU 0x00000002 ; Overlapped interrupt notification vector 
 VMCS_GUEST_INTERRUPT_STATUS                     EQU 0x00000810 ; Tracking virtual execution interrupt requests
 VMCS_GUEST_PML_INDEX                            EQU 0x00000812 ; Page Modification Log tracker index
 
 ; --- 64-Bit Control Fields (Advanced Hardware Monitoring Acceleration) ---
 VMCS_CTRL_VIRTUAL_APIC_ADDRESS                  EQU 0x00002012 ; Direct hardware page for Virtual APIC tracking
 VMCS_CTRL_APIC_ACCESS_ADDRESS                   EQU 0x00002014 ; Memory-mapped layout for APIC access acceleration
-VMCS_CTRL_POSTED_INTERRUPT_DESC_ADDRESS         EQU 0x00002016 ; Physical pointer to posted descriptor structure
+VMCS_CTRL_POSTED_INTERRUPT_DESC_ADDRESS         EQU 0x00002016 ; Physical pointer to posted descriptor structure (didnt got used)
 VMCS_CTRL_VMFUNC_CONTROLS                       EQU 0x00002018 ; Allowed VMFUNC instruction parameters
 VMCS_CTRL_PML_ADDRESS                           EQU 0x0000200E ; Base physical address for Page Modification Logging
 
@@ -420,12 +410,56 @@ VMCS_CTRL_TPR_THRESHOLD                         EQU 0x0000401C ; Task Priority R
 VMCS_CTRL_PLE_GAP                               EQU 0x00004020 ; Pause Loop Exiting parameter window
 VMCS_CTRL_PLE_WINDOW                            EQU 0x00004022 ; Pause Loop Exiting execution loop duration timer
 
-; --- 32-Bit VM-Exit Information Fields (Deep Exception Diagnostics) ---
-VMCS_VMEXIT_INTERRUPTION_ERROR_CODE             EQU 0x00004406 ; Identifies underlying fault vectors on intercept
-VMCS_IDT_VECTORING_INFORMATION                  EQU 0x00004408 ; Diagnostic data on vectoring history during transition
-VMCS_IDT_VECTORING_ERROR_CODE                   EQU 0x0000440A ; Precise structural code log of vectoring faults
+; ==============================================================================
+; ADVANCED VM-EXIT CONTROLS & LIFECYCLE BOUNDARIES (EQU SUPPLEMENT)
+; ==============================================================================
+VMCS_CTRL_SECONDARY_VM_EXIT_CONTROLS            EQU 0x00002044 ; 64-Bit Secondary VM-Exit Controls (VERIFIED SILICON VALUE)
+VMCS_CTRL_TSC_OFFSET                            EQU 0x00002010
+VMCS_CTRL_POSTED_INTERRUPT_DESCRIPTOR_ADDRESS   EQU 0x00002016
+VMCS_CTRL_EXECUTIVE_VMCS_POINTER                EQU 0x0000200C
 
+; ==============================================================================
+;                  INTEL x86_64 PHYSICAL MEMORY ARCHITECTURE MAP
+; ==============================================================================
+; This blueprint maps the absolute hardware boundaries of the physical RAM.
+; Enforced and utilized by the Type-1 Hypervisor core during all phases.
+; ==============================================================================
 
+; [1] LOW STERILE ZONE (Conventional Memory Space)
+; ------------------------------------------------------------------------------
+; Range: 0x00001000 — 0x0009FFFF
+; Status: Safe Real RAM / Absolutes Isolation Buffer Zone
+; Use:   Bootstrap Page Tables (PML4), VMCS/VMXON blocks, Master MSR Bitmaps, 
+;        and the Stackless Execution RSP Vector Anchor.
+; Note:  The lower 4KB (0x00000000 — 0x00000FFF) is left clean for IVT/BIOS data.
+
+; [2] UPPER MEMORY AREA (UMA - Hardware Mapped / Non-RAM Territory)
+; ------------------------------------------------------------------------------
+; Status: Hardware-Mapped I/O (MMIO Boundary) — DO NOT USE FOR STORAGE CORRUPTIONS
+; Enclaves:
+;   A) Video RAM / VGA Text Mode Buffer:  0x000A0000 — 0x000BFFFF [Debug Frame Dump]
+;   B) Option ROMs / Controller Mapping:  0x000C0000 — 0x000DFFFF [Read-Only Hardware]
+;   C) System BIOS / UEFI Firmware Core:  0x000E0000 — 0x000FFFFF [System Reset Vector]
+
+; [3] EXTENDED MEMORY REGION (High RAM Ocean)
+; ------------------------------------------------------------------------------
+; Range: 0x00100000 — 0x000EFFFFFFF
+; Status: Solid Physical Real RAM / High-Speed Execution Space
+; Use:   The primary cage for the Guest OS (Windows/Linux Kernel). Monitored 
+;        and isolated dynamically using Identity-Mapped Extended Page Tables (EPT).
+
+; [4] THE PCI HOLE / SYSTEM MMIO WINDOW
+; ------------------------------------------------------------------------------
+; Range: 0x000F0000000 — 0x000FFFFFFFF
+; Status: CRITICAL SILICON BARRIER — ABSOLUTELY FORBIDDEN FOR RAM ALLOCATION
+; Use:   Hardwired into motherboard components, local APIC matrices, and device MMIO.
+
+; [5] UPPER EXTENDED RAM SPACE (Above 4GB Boundary)
+; ------------------------------------------------------------------------------
+; Range: 0x00100000000 — [Maximum Physical RAM Limit]
+; Status: Fully Accessible 64-Bit Extended Paging Memory Space
+; Use:   Dynamic EPT Paging expansion layers to support massive Guest memory configurations.
+; ==============================================================================
 
 
 ;bootloader finish! part 1 start:
@@ -438,11 +472,54 @@ mov rax, 0x01B22FE4
 mov cr4, rax
 
 mov rax, 0x01
-mov dq [Hypervisr_start], rax
-
+mov dq [Hypervisor_start], rax ;it is a verfication code to clean up all of the code here so 
+                               ;we going to do verify if the code are there we cleaning all of the code 
+                               ;for the l1 instruction cache so everything going to be clean and smooth
 mov eax, 0x00B00408
 mov dr7, eax
 
+;Before we cleaning the bootloader so there gonna be clean time we need to rebuild the GDT:
+VMCS_HYPERVISOR_GDT_BASE                        EQU 0x0004C000 ; Secure 4KB page for our permanent 64-bit GDT layout
+VMCS_HYPERVISOR_GDTR_POINTER                    EQU 0x0004C500 ; Dedicated scratchpad block for the 10-byte GDTR register
+
+Absolute_Sanitization_GDT_Relocation:
+    ; -------------------------------------------------------------------------
+    ; 1. Clear exactly 64 bytes for our monolithic descriptors (8 entries * 8 bytes)
+    ; -------------------------------------------------------------------------
+    mov edi, VMCS_HYPERVISOR_GDT_BASE   ; Destination Base RAM address: 0x4C000
+    xor eax, eax                        ; Establish sterile zero reference anchor
+    mov rcx, 8                          ; Allocate 8 quadwords footprint
+    rep stosq                           ; Wipe memory block completely and cleanly
+
+    ; -------------------------------------------------------------------------
+    ; 2. Inject bare-metal 64-bit descriptors directly into the new 0x4C000 page
+    ; -------------------------------------------------------------------------
+    mov edi, VMCS_HYPERVISOR_GDT_BASE
+    
+    ; Entry 0: Null Descriptor (Enforced by Intel Silicon layout)
+    mov qword [rdi + 0],  0x0000000000000000 
+    
+    ; Entry 1: Hypervisor Code Segment Descriptor (64-Bit, Ring 0, Present, Executable)
+    mov qword [rdi + 8],  0x00209A0000000000 
+    
+    ; Entry 2: Hypervisor Data Segment Descriptor (64-Bit, Ring 0, Present, Read/Write)
+    mov qword [rdi + 16], 0x0000920000000000 
+
+    ; [Entries 3 and 4 are structurally reserved here 16-byte TSS Matrix later]
+
+    ; -------------------------------------------------------------------------
+    ; 3. Construct the strict 10-byte GDTR pointer layout in physical memory
+    ; -------------------------------------------------------------------------
+    mov rbx, VMCS_HYPERVISOR_GDTR_POINTER ; Address location: 0x4C500
+    mov word  [rbx], 47                 ; Limit: (6 entries * 8 bytes) - 1 = 47 (0x2F)
+    mov qword [rbx + 2], VMCS_HYPERVISOR_GDT_BASE ; Base: Points directly back to 0x4C000
+
+    ; -------------------------------------------------------------------------
+    ; 4. Force atomic silicon swap execution layout
+    ; -------------------------------------------------------------------------
+    lgdt [rbx]                          ; Reload the processor layout architecture instantly
+
+;now after we rebuild our LGDT we can delete everything:
 xor eax, eax 
 mov rdi, 0x7C00
 mov rcx, 64
@@ -544,11 +621,6 @@ setup_host_and_execution_controls:
     mov rax, VMCS_HOST_TR_SELECTOR      ; Encoding: 0x00000C0C
     vmwrite rax, rbx
 
-    ; 4. Lock Down Primary Processor Intercept Controls
-    mov rbx, 0x94006172                 ; Master execution intercept bitmask profile
-    mov rax, VMCS_CTRL_PROCESSOR_BASED_VM_EXECUTION_CONTROLS ; Encoding: 0x00004002
-    vmwrite rax, rbx             
-
     ; 5. Sync Extended Feature Enable Register (IA32_EFER MSR)
     mov ecx, 0xC0000080                 ; MSR address parameter for IA32_EFER
     rdmsr                        
@@ -562,10 +634,6 @@ setup_host_and_execution_controls:
     mov rbx, 0x00008200                 ; VM-Exit Control features configuration bitmask
     mov rax, VMCS_CTRL_VMEXIT_CONTROLS  ; Encoding: 0x0000400C (CORRECTED PARAMETER ORDER)
     vmwrite rax, rbx
-
-    mov rbx, 0x00000200                 ; VM-Entry Control features configuration bitmask
-    mov rax, VMCS_CTRL_VMENTRY_CONTROLS ; Encoding: 0x00004012
-    vmwrite rax, rbx                       
 
     ; 1. Initialize Host Base Address Registers (FS and GS Bases)
     ; Replacing the unstable RCX-driven loop with direct, hardware-safe commits
@@ -592,11 +660,6 @@ setup_host_and_execution_controls:
     ; 4. Lock Down Exception Virtualization Intercept Bitmask
     mov rax, VMCS_CTRL_EXCEPTION_BITMAP ; Encoding: 0x00004004 (Targeted diagnostic trap)
     mov rbx, 0x00227558                 ; Hard-intercept mask for internal page/debug faults
-    vmwrite rax, rbx             
-   
-    ; 5. Deploy Extended Page Tables Root Pointer (EPTP)
-    mov rax, VMCS_CTRL_EPT_POINTER      ; Encoding: 0x0000201A
-    mov rbx, 0x0000601E                 ; Nested paging base allocation framework pointer
     vmwrite rax, rbx             
 
     ; 6. Commit Active Host Interrupt Descriptor Table Base (IDTR)
@@ -670,12 +733,6 @@ Guest_area:
     mov rax, VMCS_CTRL_IO_BITMAP_B_ADDRESS ; Encoding: 0x00002002 
     vmwrite rax, rbx             
 
-    ; Read-Modify-Write sequence for CPU-Based Execution Intercept Controls
-    mov rcx, VMCS_CTRL_PROCESSOR_BASED_VM_EXECUTION_CONTROLS ; Encoding: 0x00004002
-    vmread rbx, rcx                     ; CORRECTED: Read field encoding from RCX into RBX
-    or ebx, (1 << 15) | (1 << 16)       ; Activate CR3-load and CR3-store hardware intercepts
-    vmwrite rcx, rbx                    ; Commit updated intercept profile back to silicon
-
     mov rax, VMCS_CTRL_CR3_TARGET_COUNT ; Encoding: 0x0000400A 
     xor rbx, rbx                        ; Zero-out target count to force exits on unmapped CR3 switches
     vmwrite rax, rbx            
@@ -724,7 +781,7 @@ Guest_area:
     mov rax, VMCS_GUEST_GS_ACCESS_RIGHTS ; Encoding: 0x0000481E
     vmwrite rax, rbx            
 
-    ; ==============================================================================
+; ==============================================================================
 ; INTEL VMX GUEST-STATE ARCHITECTURE INITIALIZATION (PART 2)
 ; ==============================================================================
 
@@ -764,9 +821,6 @@ Guest_state_segments_and_registers:
     mov rax, VMCS_GUEST_INTERRUPT_STATUS ; Encoding: 0x00000810
     vmwrite rax, rcx
 
-    mov rax, VMCS_GUEST_PML_INDEX       ; Encoding: 0x00000812
-    vmwrite rax, rcx
-
     ; -------------------------------------------------------------------------
     ; Part 5: Establishing Hardwired Secondary 64-Bit System Registers (Hex Dumps)
     ; -------------------------------------------------------------------------
@@ -789,7 +843,7 @@ Guest_state_segments_and_registers:
 
     ; Note: PDPTE fields are omitted by the CPU in 64-bit mode, initialized to zero for security
     mov rax, VMCS_GUEST_PDPTE0          ; Encoding: 0x0000280A
-    vmwrite rax, r改善xc             
+    vmwrite rax, rcx             
 
     mov rax, VMCS_GUEST_PDPTE1          ; Encoding: 0x0000280C
     vmwrite rax, rcx             
@@ -800,7 +854,7 @@ Guest_state_segments_and_registers:
     mov rax, VMCS_GUEST_PDPTE3          ; Encoding: 0x00002810
     vmwrite rax, rcx
 
-   ; ==============================================================================
+; ==============================================================================
 ; INTEL VMX GUEST-STATE ARCHITECTURE INITIALIZATION (PART 3)
 ; ==============================================================================
 
@@ -820,7 +874,7 @@ Guest_Memory_Limits_Bases_And_Execution_Controls:
     vmwrite rax, rbx             
 
     ; Restoring strict zero context for unusable data segments limits
-    xor rcx, rcx                        
+    xor ecx, ecx                        
     
     mov rax, VMCS_GUEST_ES_LIMIT        ; Encoding: 0x00004800
     vmwrite rax, rcx             
@@ -832,9 +886,6 @@ Guest_Memory_Limits_Bases_And_Execution_Controls:
     vmwrite rax, rcx             
 
     mov rax, VMCS_GUEST_LDTR_LIMIT      ; Encoding: 0x0000480C
-    vmwrite rax, rcx             
-
-    mov rax, VMCS_GUEST_TR_LIMIT        ; Encoding: 0x0000480E
     vmwrite rax, rcx             
 
     ; Enforcing zero-base linear execution space for flat 64-bit mode layout
@@ -863,9 +914,6 @@ Guest_Memory_Limits_Bases_And_Execution_Controls:
     vmwrite rax, rcx             
 
     ; Neutralizing execution sub-registers and hardware trace components
-    mov rax, VMCS_GUEST_DEBUGCTL        ; Encoding: 0x00002802 (CORRECTED architectural MSR link)
-    vmwrite rax, rcx             
- 
     mov rax, VMCS_GUEST_SYSENTER_CS     ; Encoding: 0x0000482A
     vmwrite rax, rcx             
  
@@ -893,9 +941,6 @@ Guest_Memory_Limits_Bases_And_Execution_Controls:
     mov rax, VMCS_GUEST_GDTR_LIMIT      ; Encoding: 0x00004810 (CORRECTED from 0x4410)
     vmwrite rax, rdx
 
-    mov rax, VMCS_GUEST_IDTR_BASE       ; Encoding: 0x00006818
-    vmwrite rax, rcx
- 
     mov rax, VMCS_GUEST_IDTR_LIMIT      ; Encoding: 0x00004812 (CORRECTED from 0x4412)
     vmwrite rax, rcx
 
@@ -914,16 +959,6 @@ Guest_Memory_Limits_Bases_And_Execution_Controls:
     mov rbx, 0xFFFFFFFFFFFFFFFF  
     vmwrite rax, rbx             
  
-    mov rax, VMCS_GUEST_PERF_GLOBAL_CTRL ; Encoding: 0x00002808 (CORRECTED from 0x482E)
-    vmwrite rax, rcx             
- 
-    mov rax, VMCS_GUEST_PAT             ; Encoding: 0x00002804 (CORRECTED from 0x6828)
-    vmwrite rax, rcx
-
-    mov rbx, 0x0000000000000D01         ; Enforce Long Mode Active context stability inside guest cage
-    mov rax, VMCS_GUEST_EFER            ; Encoding: 0x00002806 (CORRECTED from 0x682A)
-    vmwrite rax, rbx
-
     ; Zero-out modern hardware tracking mitigation layers to enforce raw sandbox baseline
     ; (Addresses: 0x682C, 0x682E, 0x6830 matching Intel architectural specifications)
     mov rax, VMCS_GUEST_IA32_BNDCFGS                  ; Encoding: 0x0000682C
@@ -984,538 +1019,582 @@ Guest_Execution_Context_And_Speculation_Controls:
     vmwrite rax, rcx
 
     ; -------------------------------------------------------------------------
-    ; Part 13: Initializing Guest Page Directory Pointer Table Entries (PDPTE)
-    ; -------------------------------------------------------------------------
-    ; Enforcing proper sequential silicon order mapped to explicit master definitions
-    mov rax, VMCS_GUEST_PDPTE0          ; Encoding: 0x0000280A
-    vmwrite rax, rcx
-
-    mov rax, VMCS_GUEST_PDPTE1          ; Encoding: 0x0000280C
-    vmwrite rax, rcx
-
-    mov rax, VMCS_GUEST_PDPTE2          ; Encoding: 0x0000280E
-    vmwrite rax, rcx
-
-    mov rax, VMCS_GUEST_PDPTE3          ; Encoding: 0x00002810
-    vmwrite rax, rcx
-
-    ; -------------------------------------------------------------------------
     ; Debug Boundary Checkpoint
     ; -------------------------------------------------------------------------
     jmp $                               ; Localized infinite loop for runtime verification
 
-        
+    ;this where you stop tommorow you gonna keep going good night
     
 ;GUEST FINISH! 
 
-;----------------- PART: 4  VM-Execution Control Fields -----------------
-VM_Execution_Control_Fields:
-    mov ecx, 0x48D                  ; IA32_VMX_TRUE_PINBASED_CTLS MSR   0x48D
-    rdmsr                       
-    
-    or  eax, 0x000000A9       
-    and eax, edx               
+; ==============================================================================
+; INTEL VMX EXECUTION CONTROL FIELDS INITIALIZATION (MASTER BLUEPRINT)
+; ==============================================================================
 
-    mov ecx, 0x00004000             ; PIN_BASED_VM_EXEC_CONTROLS    0x4000
+VM_Execution_Control_Fields:
+    ; -------------------------------------------------------------------------
+    ; 1. Configure Pin-Based VM-Execution Controls
+    ; -------------------------------------------------------------------------
+    mov ecx, 0x0000048D                 ; IA32_VMX_TRUE_PINBASED_CTLS MSR
+    rdmsr                       
+    ; Formula: Value = (Allowed_1_Bits & Requested_Bits) | Mandatory_1_Bits
+    and rdx, 0x000000A9                 ; Request continuous hardware clock tracking profiles
+    or  rax, rdx                        ; RAX now holds the solid validated bitmask
+    
+    mov rcx, VMCS_CTRL_PIN_BASED_VM_EXECUTION_CONTROLS ; Encoding: 0x00004000
     vmwrite rcx, rax         
           
-    mov ecx, 0x48E                  ; IA32_VMX_TRUE_PROCBASED_CTLS  0x48E
+    ; -------------------------------------------------------------------------
+    ; 2. Configure Primary Processor-Based VM-Execution Controls
+    ; -------------------------------------------------------------------------
+    mov ecx, 0x0000048E                 ; IA32_VMX_TRUE_PROCBASED_CTLS MSR
     rdmsr                           
-
-    and eax, edx                
-    or  eax, 0x11016280             ;HLT, INVLPG, CR3, DR, I/O, MSR Bitmaps
-    and eax, edx            
-
-    mov ecx, 0x00004002             ; VMCS Encode Primary Processor Controls    0x4002
+    mov r8, rdx                         ; R8 = Allowed 1 Bits tracking mask
+    
+    mov r9d, 0x11016280                 ; Requested: HLT, INVLPG, CR3, DR, I/O, MSR Bitmaps
+    and r8, r9                          ; Enforce only hardware-allowed bits
+    or  rax, r8                         ; Merge mandatory 1 bits with sanitized choices
+    
+    mov rcx, VMCS_CTRL_PROCESSOR_BASED_VM_EXECUTION_CONTROLS ; Encoding: 0x00004002
     vmwrite rcx, rax           
 
-    mov ecx, 0x48B                  ; IA32_VMX_PROCBASED_CTLS2  0x48B
+    ; -------------------------------------------------------------------------
+    ; 3. Configure Secondary Processor-Based VM-Execution Controls
+    ; -------------------------------------------------------------------------
+    mov ecx, 0x0000048B                 ; IA32_VMX_PROCBASED_CTLS2 MSR address pointer
     rdmsr                          
-
-    and eax, edx                
-    or  eax, 0x00000846             ;  EPT(1), Descriptor Tables(2), WBINVD(6), RDRAND(11) 0x0846
-    and eax, edx            
-
-    mov ecx, 0x0000401E             ; VMCS Encode Secondary Controls    0x401E
+    mov r8, rdx                         ; R8 = Allowed 1 Bits baseline tracking mask
+    
+    ; Requested Profile: EPT(1), DescTables(2), VPID(5), WBINVD(6), RDRAND(11), 
+    ;                    ENCLS(15), PML(17), MBEC(22), ENCLV(26), FLUSHBYASID(28)
+    mov r9d, 0x144448E6                 ; UPDATED: Added Bit 22 for strict kernel-mode execution tracking
+    and r8, r9                          ; Sanitize requested profile against hardware capabilities
+    or  rax, r8                         ; Fuse mandatory 1 bits with optimized parameters
+    
+    mov rcx, VMCS_CTRL_SECONDARY_VM_EXEC_CONTROLS ; Encoding: 0x0000401E
     vmwrite rcx, rax              
 
-    mov ecx, 0x49F                  ; IA32_VMX_PROCBASED_CTLS3     0x49F
+    ; -------------------------------------------------------------------------
+    ; 4. Configure Tertiary Processor-Based VM-Execution Controls
+    ; -------------------------------------------------------------------------
+    mov ecx, 0x0000049F                 ; IA32_VMX_PROCBASED_CTLS3 MSR
     rdmsr                           
+    and rdx, 0x00000000                 ; Strict sandbox isolation (No advanced dynamic extensions)
+    or  rax, rdx            
 
-    and eax, edx                
-    or  eax, 0x00000000             
-    and eax, edx            
-
-    mov ecx, 0x00004022             ; VMCS Encode Tertiary Controls    0x4022
+    mov rcx, VMCS_CTRL_TERTIARY_PROC_BASED_CONTROLS ; Encoding: 0x00002034 (CORRECTED architectural 64-bit field)
     vmwrite rcx, rax                
 
-Suffocate_APIC_Interrupts:
-    mov rbx, 0xFFFFFFFFFFFFFFFF    
-    mov eax, 0x0000201E             ; EOI_EXIT0 0x201E
-    vmwrite rax, rbx                
+; -----------------------------------------------------------------------------
+; Suffocation Protocols: Locking Down Telemetry, Interrupts, and Firmware Loops
+; -----------------------------------------------------------------------------
 
-    add eax, 2                      ; EOI_EXIT1 0x00002020
-    xor ecx, ecx
-    vmwrite rax, rcx               
-
-    add eax, 2                      ; EOI_EXIT2 0x00002022
-    vmwrite rax, rcx               
-
-    add eax, 2                      ; EOI_EXIT3 0x00002024
-    vmwrite rax, rcx         
-
-Suffocate_Exceptions_And_Registers:
-    mov ebx, 0xFFFFFFFF           
-    mov eax, 0x00004004             ;  Exception Bitmap 
-    vmwrite rax, rbx                
-
-Setup_EPT_Pointer_Hardware:
-    mov rbx, rdi                            
-    or  rbx, 0x7E            
-    mov eax, 0x0000201A             ;  EPT Pointer (EPTP) 
-    vmwrite rax, rbx                                     
-
-Suffocate_VM_Functions:
-    xor edx, edx               
+Optimize_APIC_Interrupt_Speed:
+    ; Zero out all EOI exit bitmaps to prevent execution lagging and maximize performance
+    ; We going to give the interrupts to the kernel we want him to handle them 
+    ; The Hypervisor going to handle the special interrupts
+    xor ecx, ecx                         ; Enforce sterile zero register context
     
-    mov eax, 0x00002018             ; VM-Function Controls 
-    vmwrite rax, rdx               
+    mov rax, VMCS_CTRL_EOI_EXIT_BITMAP_0 ; Encoding: 0x0000201C
+    vmwrite rax, rcx                
+
+    mov rax, VMCS_CTRL_EOI_EXIT_BITMAP_1 ; Encoding: 0x0000201E
+    vmwrite rax, rcx               
+
+    mov rax, VMCS_CTRL_EOI_EXIT_BITMAP_2 ; Encoding: 0x00002020
+    vmwrite rax, rcx               
+
+    mov rax, VMCS_CTRL_EOI_EXIT_BITMAP_3 ; Encoding: 0x00002022
+    vmwrite rax, rcx
 
 Suffocate_SGX_And_Encryption:
-    mov rbx, 0xFFFFFFFFFFFFFFFF     
-
-    mov eax, 0x0000202E             ; ENCLS-Exiting Bitmap 0x0000202E   AI said: 0x00002030 
+    mov rbx, 0xFFFFFFFFFFFFFFFF         ; Force immediate exits on all secure enclaves and encryption calls
+    
+    mov rax, VMCS_CTRL_ENCLS_EXITING_BITMAP ; Encoding: 0x0000202E (VERIFIED AUTHENTIC SILICON VALUE)
     vmwrite rax, rbx                
 
-    add eax, 16                     ; PCONFIG-Exiting Bitmap 0x0000203E AI said: 0x0000203E
+    mov rax, VMCS_CTRL_PCONFIG_EXITING_BITMAP ; Encoding: 0x0000203E
     vmwrite rax, rbx               
 
-    mov eax, 0x00002034             ; XSS-Exiting Bitmap 0x00002034
+    mov rax, VMCS_CTRL_XSS_EXITING_BITMAP ; Encoding: 0x0000202C
     vmwrite rax, rbx                
+
 
 Suffocate_SPP_And_HLAT:
-    xor ebx, ebx                    
-
-    mov eax, 0x00002030             ; Sub-Page-Permission-Table Pointer 
+    xor ebx, ebx                        ; Clear pointer arrays to isolate secondary translation layers
+    
+    mov rax, 0x00002030                 ; VMCS_CTRL_SPP_TABLE_POINTER
     vmwrite rax, rbx               
 
-    mov eax, 0x00002040             ; HLAT Pointer 
+    mov rax, VMCS_CTRL_HLAT_POINTER     ; Encoding: 0x00002040
     vmwrite rax, rbx               
 
-Suffocate_PASID_Timeout_And_SEAM:
-    mov eax, 0x00004020             ; Instruction-Timeout Control 
-    vmwrite rax, rbx              
-
-    mov eax, 0x00002042             ; SEAM Shared EPTP 0x2042
+    mov rax, 0x00002042                 ; VMCS_CTRL_SEAM_SHARED_EPTP
     vmwrite rax, rbx                
 
 Suffocate_APIC_Timer:
-    mov eax, 0x0000203A             ; Guest Deadline Shadow   0x203A
-    vmwrite rax, rbx                           
+    mov rax, 0x0000203A                 ; VMCS_GUEST_IA32_TSC_DEADLINE (Guest Deadline Shadow tracking register)
+    vmwrite rax, rbx
 
-;----------------- PART 5: VM-Exit Control Fields -----------------
+; ==============================================================================
+; INTEL VMX EXECUTION CONTROL FIELDS INITIALIZATION (PART 5)
+; ==============================================================================
+
 init_secondary_and_msr_controls:
-    ; IA32_VMX_EXIT_CTLS2 MSR
-    mov ecx, 0x493                  
+    ; 1. Sync and Sanitize Secondary VM-Exit Hardware Controls
+    mov ecx, 0x00000493                 ; IA32_VMX_EXIT_CTLS2 MSR address pointer
     rdmsr                                           
-    and edx, eax                    
-
-    ; SECONDARY_VM_EXIT_CONTROLS
-    mov eax, 0x2044                         ;CHECK THE MSRS            
+    and edx, eax                        ; Extract the baseline allowed hardware bitmask configuration
+    
+    ; Clear secondary exit masks to isolate execution environments safely
+    xor ebx, ebx                        ; Establish sterile zero context anchor
+    mov rax, VMCS_CTRL_SECONDARY_VM_EXIT_CONTROLS ; Encoding: 0x00002044
     vmwrite rax, rbx 
 
-    ; VM-Exit MSR-Store Count
-    mov eax, 0x400E                  
-    vmwrite rax, rbx                
-
-    ; VM-Exit MSR-Store Address
-    mov eax, 0x4010             
-    vmwrite rax, rbx                
-
-    ; VM-Exit MSR-Load Count
-    mov eax, 0x2006            
-    vmwrite rax, rbx                
-
-    ; VM-Exit MSR-Load Address
-    mov eax, 0x2008             
+    ; 2. Initialize VM-Exit MSR Lifecycle Management Matrices
+    ; Fixing the critical overlapping address-vs-count encoding bugs cleanly
+    mov rax, VMCS_CTRL_VMEXIT_MSR_LOAD_ADDRESS ; Encoding: 0x00002008 (64-Bit Address link)
     vmwrite rax, rbx
 
 configure_vmcs_raw:
-    ; --- Notification Vector ---
-    mov eax, 0x0002                     
-    mov ebx, 0x0002         
+    ; -------------------------------------------------------------------------
+    ; 3. Establish Core Execution Vector Anchors (Raw Controls Configuration)
+    ; -------------------------------------------------------------------------
+    
+    ; --- Posted-Interrupt Notification Vector ---
+    mov rbx, 0x00000002                 ; Assign hardwired vector interrupt slot index 2
+    mov rax, VMCS_CTRL_POSTED_INTERRUPT_STATUS_VECTOR ; Encoding: 0x00000002     
     vmwrite rax, rbx        
 
-    ; --- EPTP  ---
-    mov eax, 0x0004        
-    mov ebx, 0x0000        
-    vmwrite rax, rbx       
+; ==============================================================================
+; INTEL VMX EXECUTION CONTROL FIELDS INITIALIZATION (PART 6 - FINAL ENTRY SET)
+; ==============================================================================
 
-;----------------- PART 6: VM-ENTRY CONTROL FIELDS -----------------
-
-  mov ecx, 0x48C                  ; IA32_VMX_TRUE_ENTRY_CTLS MSR
+init_vm_entry_control_fields:
+    ; -------------------------------------------------------------------------
+    ; 1. Sync and Validate Hardware VM-Entry Controls
+    ; -------------------------------------------------------------------------
+    mov ecx, 0x0000048C                 ; IA32_VMX_TRUE_ENTRY_CTLS MSR address pointer
     rdmsr                          
+    mov r8, rdx                         ; R8 = Allowed 1 Bits baseline tracking mask
+    
+    mov r9d, 0x00000204                 ; Requested: IA32e/Long-Mode Guest (Bit 2) + Isolation Controls
+    and r8, r9                          ; Sanitize requested bits against physical capabilities
+    or  rax, r8                         ; Fuse mandatory 1 bits with optimized parameters
+    
+    mov rcx, VMCS_CTRL_VMENTRY_CONTROLS ; Encoding: 0x00004012
+    vmwrite rcx, rax               
 
-    mov ebx, 0x204                    
-    and ebx, edx                  
-    or  ebx, eax           
-
-    mov eax, 0x4012                 ; VM_ENTRY_CONTROLS
-    vmwrite rax, rbx               
-
-    mov ebx, 0x80000B0D                            
-
-.write_event:
-    mov eax, 0x00004016             ; VM_ENTRY_INTR_INFO_FIELD
+    ; -------------------------------------------------------------------------
+    ; 2. Configure Guest Hardware Event Injection (Diagnostic Intercept Layer)
+    ; -------------------------------------------------------------------------
+    ; Note: Value 0x80000B0D forces an immediate hardware exception loop on launch.
+    ; Initialized directly using unrolled execution vectors to preserve stackless flow.
+    mov rbx, 0x0000000080000B0D         ; Active Injection Bitmask: Valid (Bit 31) + Hardware Exception + Vector 13
+    mov rax, VMCS_CTRL_VMENTRY_INTERRUPTION_INFORMATION_FIELD ; Encoding: 0x00004016
     vmwrite rax, rbx 
+
 ; ---------------- The fields I forgot to do -----------------------
 
 ; Check it after the optimization because there can be some things you didnt consider
 
-configure_vmcs_64bit_controls_raw:
-    ; --- IO-A 
-    mov eax, 0x2000                     ; 0x2000                      
-    mov ebx, 0x00081000     
-    vmwrite rax, rbx
+; ==============================================================================
+; INTEL VMX 64-BIT HARDWARE CONTROLS INITIALIZATION (UNROLLED PIPELINE LAYER)
+; ==============================================================================
 
-    ; --- IO-B 
-    add eax, 2                          ; 0x2002                           
-    mov ebx, 0x00082000             
-    vmwrite rax, rbx
-
-    ; --- MSR   
-    add eax, 2                          ; 0x2004
-    mov ebx, 0x00083000     
-    vmwrite rax, rbx
-
-    ; --- MSR 
-    add eax, 2                          ; 0x2006
-    mov ebx, 0x00084000     
-    vmwrite rax, rbx
-
-    ; --- MSR
-    add eax, 2                          ; 0x2008
-    xor ebx, ebx    
-    vmwrite rax, rbx
-
-    ; --- MSR
-    add eax, 2                          ; 0x200a                                                     
-    vmwrite rax, rbx    
-
-    ; --- VMCS 
-    add eax, 2                          ; 0x200c                                                  
-    mov rbx, 0xffffffffffffffff 
-    vmwrite rax, rbx
-
-    ; EPT
-    add eax, 14                         ; 0x201a
-    mov ebx, 0x0008001e     
-    vmwrite rax, rbx
-
-    ; --- PML 
-    add eax, 12                         ; 0x200e
-    xor ebx, ebx
-    vmwrite rax, rbx
-
-    ; --- 0x2010 ---
-    add eax, 2                          ; 0x2010
-    vmwrite rax, rbx
-
-    ; --- PIC 
-    add eax, 2                          ; 0x2012
-    vmwrite rax, rbx
-
-    ; --- PIC 
-    add eax, 2                          ; 0x2014
-    vmwrite rax, rbx
-
-    ; --- Posted Interrupt Descriptor 
-    add eax, 2                          ; 0x2016
-    vmwrite rax, rbx
-
-    ; --- 0x2018
-    add eax, 2                          ; 0x2018
-    vmwrite rax, rbx
-
-configure_vmcs_64bit_controls_extended_raw:
-    ; VMCS_CTRL_EOI_EXIT_BITMAP_0
-    add eax, 4                          ; 0x201c     
-    vmwrite rax, rbx
-
-    ; VMCS_CTRL_EOI_EXIT_BITMAP_1
-    add eax, 2                          ; 0x201e
-    vmwrite rax, rbx
-
-    ; VMCS_CTRL_EOI_EXIT_BITMAP_2
-    add eax, 2                          ; 0x2020
-    vmwrite rax, rbx
-
-    ; VMCS_CTRL_EOI_EXIT_BITMAP_3
-    add eax, 2                          ; 0x2022
-    vmwrite rax, rbx
-
-    ; VMCS_CTRL_EPT_POINTER_LIST_ADDRESS
-    add eax, 2                          ; 0x2024
-    vmwrite rax, rbx
-
-    ; VMCS_CTRL_VMREAD_BITMAP_ADDRESS
-    add eax, 2                          ; 0x2026
-    vmwrite rax, rbx
-
-    ; VMCS_CTRL_VMWRITE_BITMAP_ADDRESS
-    add eax, 2                          ; 0x2028
-    vmwrite rax, rbx
-
-    ; VMCS_CTRL_VIRTUALIZATION_EXCEPTION_INFORMATION_ADDRESS
-    add eax, 2                          ; 0x202a
-    vmwrite rax, rbx
-
-    ; VMCS_CTRL_XSS_EXITING_BITMAP
-    add eax, 2                          ; 0x202c
-    vmwrite rax, rbx
-
-    ; VMCS_CTRL_ENCLS_EXITING_BITMAP
-    add eax, 2                          ; 0x202e
-    vmwrite rax, rbx
-
-    ; VMCS_CTRL_TSC_MULTIPLIER
-    add eax, 3                          ; 0x2032
-    vmwrite rax, rbx
-
-configure_vmcs_32bit_controls_raw:
-    ; VMCS_CTRL_PIN_BASED_VM_EXECUTION_CONTROLS
-    mov eax, 0x4000                     ; 0x4000
-    mov ebx, 0x0000001f
-    vmwrite rax, rbx
-
-    ; VMCS_CTRL_PROCESSOR_BASED_VM_EXECUTION_CONTROLS
-    add eax, 2                          ; 0x4002
-    mov ebx, 0x04006172
-    vmwrite rax, rbx
-
-    ; VMCS_CTRL_EXCEPTION_BITMAP
-    add eax, 2                          ; 0x4004
-    mov ebx, 0x00040000
-    vmwrite rax, rbx
-
-    ; VMCS_CTRL_PAGEFAULT_ERROR_CODE_MASK
-    add eax, 2                          ; 0x4006
-    mov ebx, 0x00000000
-    vmwrite rax, rbx
-
-    ; VMCS_CTRL_CR3_TARGET_COUNT
-    add eax, 4                          ; 0x400a
-    mov ebx, 0x00000004
-    vmwrite rax, rbx
-
-    ; VMCS_CTRL_VMEXIT_CONTROLS
-    add eax, 2                          ; 0x400c
-    mov ebx, 0x0036efff
-    vmwrite rax, rbx
-
-    ; VMCS_CTRL_VMEXIT_MSR_STORE_COUNT
-    add eax, 2                          ; 0x400e
-    mov ebx, 0x00000001     
-    vmwrite rax, rbx
-
-    ; VMCS_CTRL_VMEXIT_MSR_LOAD_COUNT
-    add eax, 2                          ; 0x4010
-    xor ebx, ebx
-    vmwrite rax, rbx
-
-    ; VMCS_CTRL_PAGEFAULT_ERROR_CODE_MATCH
-    sub eax, 2                          ; 0x4008
-    vmwrite rax, rbx    
-
-    ; VMCS_CTRL_VMENTRY_CONTROLS
-    add eax, 4                          ; 0x4012
-    mov ebx, 0x000011ff
-    vmwrite rax, rbx
-   
-    ; VMCS_CTRL_VMENTRY_MSR_LOAD_COUNT
-    add eax, 2                          ; 0x4014
-    vmwrite rax, rbx
-
-    ; VMCS_CTRL_VMENTRY_INTERRUPTION_INFORMATION_FIELD
-    add eax, 2                          ; 0x4016
-    vmwrite rax, rbx
-
-    ; VMCS_CTRL_VMENTRY_EXCEPTION_ERROR_CODE
-    add eax, 2                          ; 0x4018
-    vmwrite rax, rbx
-
-    ; VMCS_CTRL_VMENTRY_INSTRUCTION_LENGTH
-    add eax, 2                          ; 0x401a
-    vmwrite rax, rbx
-
-    ; VMCS_CTRL_TPR_THRESHOLD
-    add eax, 2                          ; 0x401c
-    vmwrite rax, rbx
-
-    ; VMCS_CTRL_PLE_GAP
-    add eax, 4                          ; 0x4020
-    vmwrite rax, rbx
-
-    ; VMCS_CTRL_PLE_WINDOW
-    add eax, 2                          ; 0x4022
-    vmwrite rax, rbx
-
-    ; VMCS_CTRL_SECONDARY_PROCESSOR_BASED_VM_EXECUTION_CONTROLS
-    mov eax, 0x401e
-    mov ebx, 0x000000a0
-    vmwrite rax, rbx
-
-    mov rdi, 0x7000
+configure_vmcs_64bit_controls_clean:
+    ; Establish absolute sterile zero context for security mappings and offsets
+    xor ecx, ecx                        
     
-    mov dword [rdi], 0xC0000080  
-    mov dword [rdi + 4], 0
-    mov qword [rdi + 8], 0x500
-      
-    mov eax, 0x0000200A          ; HOST_IA32_MSR_LOAD_ADDR 
-    mov ebx, 0x00007000      
+    ; -------------------------------------------------------------------------
+    ; 2. Map Execution MSR Intercept Bitmaps and Structural Lifecycle Links
+    ; -------------------------------------------------------------------------
+    mov rbx, 0x000000000004D000         ; Physical tracking baseline layout for MSR read/write filtering
+    mov rax, VMCS_CTRL_MSR_BITMAP_ADDRESS ; Encoding: 0x00002004
     vmwrite rax, rbx
 
-;----------------- PART 7: Defender IN OUT and EPT, TSS, CONFIRM FRAGMENT AND MORE! -----------------
+    mov rbx, 0x000000000004E000         ; MSR exit store target boundary zone pointer
+    mov rax, VMCS_CTRL_VMEXIT_MSR_STORE_ADDRESS ; Encoding: 0x00002006
+    vmwrite rax, rbx
 
-    ; --------------------------------------------------------------------------
-    ;  Speculative Execution Mitigations (Spectre/Meltdown)
-    ; --------------------------------------------------------------------------
-    mov ecx, 0x00000048         
+    mov rax, VMCS_CTRL_VMENTRY_MSR_LOAD_ADDRESS ; Encoding: 0x0000200A                                                     
+    vmwrite rax, rcx    
+
+    ; -------------------------------------------------------------------------
+    ; 3. Invalidating Secondary Shadow References & Activating Extended Paging
+    ; -------------------------------------------------------------------------
+    mov rbx, 0xFFFFFFFFFFFFFFFF         ; Break hardware shadow chain linkage explicitly
+    mov rax, VMCS_CTRL_EXECUTIVE_VMCS_POINTER ; Encoding: 0x0000200C                                                  
+    vmwrite rax, rbx
+
+    ; -------------------------------------------------------------------------
+    ; 4. Neutralizing Advanced Logging arrays, APIC Vectors and Telemetry Banks
+    ; -------------------------------------------------------------------------
+    mov rax, VMCS_CTRL_TSC_OFFSET       ; Encoding: 0x00002010
+    vmwrite rax, rcx
+
+    mov rax, VMCS_CTRL_VIRTUAL_APIC_ADDRESS ; Encoding: 0x00002012
+    vmwrite rax, rcx
+
+    mov rax, VMCS_CTRL_APIC_ACCESS_ADDRESS ; Encoding: 0x00002014
+    vmwrite rax, rcx
+
+    mov rax, VMCS_CTRL_POSTED_INTERRUPT_DESCRIPTOR_ADDRESS ; Encoding: 0x00002016
+    vmwrite rax, rcx
+
+    mov rax, VMCS_CTRL_VMFUNC_CONTROLS  ; Encoding: 0x00002018
+    vmwrite rax, rcx
+
+configure_vmcs_64bit_controls_extended_clean:
+    ; -------------------------------------------------------------------------
+    ; 6. Isolating Sandbox Memory Bitmaps & Hardware Interception Layers
+    ; -------------------------------------------------------------------------
+    mov rax, VMCS_CTRL_VMREAD_BITMAP_ADDRESS ; Encoding: 0x00002026
+    vmwrite rax, rcx
+
+    mov rax, VMCS_CTRL_VMWRITE_BITMAP_ADDRESS ; Encoding: 0x00002028
+    vmwrite rax, rcx
+
+    mov rax, VMCS_CTRL_VIRTUALIZATION_EXCEPTION_INFORMATION_ADDRESS ; Encoding: 0x0000202A
+    vmwrite rax, rcx
+
+    mov rax, VMCS_CTRL_TSC_MULTIPLIER   ; Encoding: 0x00002032
+    vmwrite rax, rcx
+
+    ; ==============================================================================
+; INTEL VMX EXECUTION CONTROL FIELDS INITIALIZATION (PART 7 - EXECUTION MATRICES)
+; ==============================================================================
+
+Commit_Core_Execution_Control_Attributes:
+    ; -------------------------------------------------------------------------
+    ; 1. Configure Hardware Page Fault Interception Match/Mask Matrices
+    ; -------------------------------------------------------------------------
+    mov rax, VMCS_CTRL_PAGEFAULT_ERROR_CODE_MASK ; Encoding: 0x00004006
+    vmwrite rax, rcx
+
+    mov rax, VMCS_CTRL_PAGEFAULT_ERROR_CODE_MATCH ; Encoding: 0x00004008
+    vmwrite rax, rcx    
+
+    ; -------------------------------------------------------------------------
+    ; 2. Enforce MSR Lifecycle Transition Multipliers and Guest Length Controls
+    ; -------------------------------------------------------------------------
+    mov rbx, 0x00000001                 ; Request exactly 1 MSR structure slot for transition
+    mov rax, VMCS_CTRL_VMEXIT_MSR_STORE_COUNT ; Encoding: 0x0000400E 
+    vmwrite rax, rbx
+
+    mov rax, VMCS_CTRL_VMENTRY_MSR_LOAD_COUNT ; Encoding: 0x00004014
+    vmwrite rax, rcx                    ; Clear to zero to rely entirely on static host layout
+
+    mov rax, VMCS_CTRL_VMENTRY_EXCEPTION_ERROR_CODE ; Encoding: 0x00004018
+    vmwrite rax, rcx
+
+    mov rax, VMCS_CTRL_VMENTRY_INSTRUCTION_LENGTH ; Encoding: 0x0000401A
+    vmwrite rax, rcx
+
+    ; -------------------------------------------------------------------------
+    ; 3. Neutralizing APIC Thresholds and Modern APIC Virt Execution Windows
+    ; -------------------------------------------------------------------------
+    mov rax, VMCS_CTRL_TPR_THRESHOLD    ; Encoding: 0x0000401C
+    vmwrite rax, rcx
+
+    mov rax, VMCS_CTRL_PLE_GAP          ; Encoding: 0x00004020
+    vmwrite rax, rcx
+
+    mov rax, VMCS_CTRL_PLE_WINDOW       ; Encoding: 0x00004022
+    vmwrite rax, rcx
+
+; -------------------------------------------------------------------------
+;                     Defenses for the PC
+; -------------------------------------------------------------------------
+
+
+
+; ==============================================================================
+; HARDWARE DEFENDER DEFINE MATRIX (EQU REFACTORING - PART 7)
+; ==============================================================================
+; Speculative Execution & Architecture Control Registers
+MSR_IA32_SPEC_CTRL                              EQU 0x00000048 ; Spectre/Meltdown Silicon Mitigation Register
+MSR_IA32_VMX_PROCBASED_CTLS2                    EQU 0x0000048B ; Secondary VMX Capabilities Core Identifier
+MSR_IA32_VIRTUAL_EXCEPTION_INFO                 EQU 0x00000982 ; Global Intercept and Exception Subsystem Policy
+
+; Physical Memory Structural Base Boundaries
+VTD_IOMMU_BASE_ADDRESS                          EQU 0xFED90000 ; Root Hardware Location for IOMMU Motherboard Communication
+VTD_PAGE_TABLE_ROOT                             EQU 0x00095000 ; Secure allocation for VT-d Page Directory Root
+VTD_PAGE_TABLE_LEVEL2                           EQU 0x00096001 ; Secondary pointer matrix link target with valid attributes
+
+EPT_PML4_BASE_ADDRESS                           EQU 0x00011000 ; Root Matrix for Sandbox Isolation Extended Page Tables
+EPT_PDPT_BASE_ADDRESS                           EQU 0x00012000 ; Page Directory Pointer Table Memory Anchor
+EPT_PD_ARRAY_START                              EQU 0x00013000 ; NEW: Start address of our 10 continuous PD pages
+
+; Verified VMCS Encodings Supplement
+VMCS_CTRL_EPT_POINTER                           EQU 0x0000201A ; 64-Bit VMCS Encoding link for Extended Page Table Pointer (EPTP)
+VMCS_CTRL_EPTP_INDEX                            EQU 0x00002040 ; supplemental EPTP Index slot encoding anchor
+VMCS_CTRL_EPT_POINTER_LIST_ADDRESS              EQU 0x00002024 ; Didnt got used
+
+; ==============================================================================
+;           INTEL SILICON ARCHITECTURE MSR (MODEL-SPECIFIC REGISTERS)
+; ==============================================================================
+MSR_IA32_MISC_ENABLE                            EQU 0x000001A0 ; Processor Feature Allocation and Hardware Feature Flags
+MSR_IA32_EFER                                   EQU 0xC0000080 ; Extended Feature Enable Register (Long Mode Activation Control)
+
+; Architectural Constants for Bitmask Alignment
+MSR_IA32_MISC_ENABLE_CPUID_MAX_VAL_BIT          EQU 0x00000001 ; Hardware bit to enforce lock on CPUID limit modifications
+
+; ==============================================================================
+;      INTEL ABSOLUTE AUTHORITY HYPERVISOR CONTROL ENCODINGS
+; ==============================================================================
+VMCS_CTRL_SECONDARY_EXEC_MBEC                   EQU 0x00400000 ; Bit 22: Activates Mode-Based Execute Control (XS/XU Split)
+VMCS_CTRL_SECONDARY_EXEC_HLAT                   EQU 0x00000002 ; Extended Bit: Activates Hypervisor-Managed Linear Translation
+
+; HLAT Structural Table Pointers within the VMCS
+VMCS_CTRL_HLAT_POINTER                          EQU 0x00002040 ; 64-Bit field pointing to our strict HLAT Root Table
+
+; ==============================================================================
+;      INTEL VT-d IOMMU HARDWARE REGISTER CORES ENCODINGS (MMIO BASE: 0xFED90000)
+; ==============================================================================
+VTD_IOMMU_MMIO_BASE                             EQU 0x00000000FED90000 ; Physical Motherboard MMIO Gate Address
+VTD_IOMMU_VERSION_REG                           EQU 0x00               ; Read-Only: Architectural Version Offset
+VTD_IOMMU_CAP_REG                               EQU 0x08               ; Read-Only: Hardware Capabilities Matrix (64-Bit)
+VTD_IOMMU_EXT_CAP_REG                           EQU 0x10               ; Read-Only: Extended Capabilities Matrix (64-Bit)
+VTD_IOMMU_GCMD_REG                              EQU 0x18               ; Read-Write: Global Command Register (Activation)
+VTD_IOMMU_GSTS_REG                              EQU 0x1C               ; Read-Only: Global Status Register (Sync Polling)
+VTD_IOMMU_RTADDR_REG                            EQU 0x20               ; Read-Write: Root Entry Table Address Pointer Register
+
+
+; ==============================================================================
+; INTEL CORE INITIALIZATION & BARE-METAL SANDBOX ISOLATION ENGINE (PART 7)
+; ==============================================================================
+
+init_hardware_defender_and_paging:
+    ; -------------------------------------------------------------------------
+    ; 1. Enforce Speculative Execution Mitigations (Spectre/Meltdown Shutter)
+    ; -------------------------------------------------------------------------
+    mov ecx, MSR_IA32_SPEC_CTRL         ; Target MSR: 0x00000048
     rdmsr                        
-    or eax, 0x00000003          
-    xor edx, edx               
+    or  eax, 0x00000003                 ; Assert strict hardware execution barrier bits
+    xor edx, edx                        ; Isolate and clean the upper tracking channel
     wrmsr                        
 
-    ; --------------------------------------------------------------------------
-    ;  VT-d IOMMU Page Table Initialization & Hardware Synchronization
-    ; --------------------------------------------------------------------------
-    xor rax, rax
-    mov rcx, 1024                
-    mov rdi, 0x00095000          
-    rep stosq                    
+ Initialize_Intel_VTd_IOMMU_Hardware:
+    ; -------------------------------------------------------------------------
+    ; A. Clear exactly 8KB for VT-d Paging structures (0x95000 and 0x96000)
+    ; -------------------------------------------------------------------------
+    mov rdi, VTD_PAGE_TABLE_ROOT        ; Base Destination: 0x00095000
+    xor eax, eax                        ; Sterile zero anchor registers context
+    mov ecx, 1024                       ; 2 full pages * 512 entries = 1024 QWORDS
+    rep stosq                           ; Wipe dirty legacy footprint cleanly
 
-    mov rax, 0x00096001          
-    mov [0x00095000], rax        
-
-    mov rax, 0x00080015          
-    mov [0x00096000], rax        
-
-    mov rbx, 0xFED90000          
-    mov rax, 0x00095000          
-    mov [rbx + 0x20], rax        
-
-    mov eax, [rbx + 0x18]        
-    or eax, 0x80000000           
-    mov [rbx + 0x18], eax        
-
-.vtd_sync_loop:
-    mov eax, [rbx + 0x1C]        
-    and eax, 0x80000000          
-    jz .vtd_sync_loop  
-
-    ; --------------------------------------------------------------------------
-    ;  Block 3: Constructing Sterile EPT Partition for Sandbox Isolation
-    ; --------------------------------------------------------------------------
-    xor rax, rax
-    mov rcx, 0x600
-    mov rdi, 0x00080000        
-    rep stosq
-
-    mov rax, 0x00081007 
-    mov [0x00080000], rax
-
-    mov rax, 0x00082007
-    mov [0x00081000], rax
-
-    xor rdx, rdx
-    xor rcx, rcx              
-
-Predator_loop:
-    mov rax, rdx  
-    or rax, 0x9C
-    mov [0x00082000 + rcx * 8], rax
-    add rdx, 0x00200000            
-    inc rcx
-    cmp rcx, 512
-    jne Predator_loop 
-
-    mov eax, 0x0000201A                 ; 0x201A
-    mov edx, 0x0008001E                 
-    vmwrite rax, rdx 
+    ; -------------------------------------------------------------------------
+    ; B. Weave the structural lifecycle links inside the VT-d matrices
+    ; -------------------------------------------------------------------------
+    mov rax, VTD_PAGE_TABLE_LEVEL2      ; Level-2 allocation link target (0x00096001)
+    mov [VTD_PAGE_TABLE_ROOT], rax      ; Link Root -> Level-2 Table
     
-    ; Advanced EPT Setup
-    ; 1. Enable hardware capabilities via MSR (Includes Secondary Controls & RDTSC)
-    mov ecx, 0x0000048B      
-    rdmsr
-    or eax, 0x00641040          
-    wrmsr
+    ; Connect the VT-d hardware directly to our advanced 10GB EPT PML4 at 0x11000
+    mov rax, EPT_PML4_BASE_ADDRESS      ; Target: 0x00011000
+    or  rax, 0x15                       ; Inject synchronization attributes and valid entry bits
+    mov [0x00096000], rax               ; Secure layout binding complete
 
-    ; 2. Read, Modify, and Write Secondary Execution Controls (Activate EPT)
-    mov rdx, 0x00002012     
-    vmread rax, rdx          
-    or rax, 0x01940008      
-    vmwrite rdx, rax         
+    ; -------------------------------------------------------------------------
+    ; C. Flash Configuration Matrix directly to the physical Chipset Base
+    ; -------------------------------------------------------------------------
+    mov rbx, VTD_IOMMU_MMIO_BASE        ; RBX = Absolute Hardware Address Window: 0xFED90000
+    mov rax, VTD_PAGE_TABLE_ROOT        ; Pointer linkage base (0x00095000)
+    mov [rbx + VTD_IOMMU_RTADDR_REG], rax ; Force the IOMMU hardware to track our root table
 
-    ; 3. Configure Extended Page Table Pointer (EPTP) Address
-    mov rax, 0x00002040      
-    mov rbx, 0x0008001E     
-    vmwrite rax, rbx                
+    ; -------------------------------------------------------------------------
+    ; D. Trigger and Enforce Active Global Hardware Synchronization Command
+    ; -------------------------------------------------------------------------
+    mov eax, [rbx + VTD_IOMMU_GCMD_REG] ; Read active hardware command configuration
+    or  eax, 0x80000000                 ; Assert command bit 31 (Global Translation Enable)
+    mov [rbx + VTD_IOMMU_GCMD_REG], eax ; Dispatch electrical activation impulse to the chipset
 
-    ; 4. Configure MSRs for optimization and global intercept policy
-    mov ecx, 0x00000982          
-    rdmsr
-    or eax, 0x00000003         
-    xor edx, edx
-    wrmsr
+    ; -------------------------------------------------------------------------
+    ; E. Strict Microarchitectural Polling Loop (Wait for Silicon Acknowledgement)
+    ; -------------------------------------------------------------------------
+.vtd_hardware_sync_loop:
+    mov eax, [rbx + VTD_IOMMU_GSTS_REG] ; Poll the physical Global Status Register (Offset 0x1C)
+    and eax, 0x80000000                 ; Mask and isolate status bit 31 (Translation Status)
+    jz  .vtd_hardware_sync_loop         ; Tight assembly lock path until the translation cycle commits complete
 
-; --------------------------------------------------------------------------
-;  Block 4: TSS Verification and Fragment Validation Engine inside VM-Exit
-; --------------------------------------------------------------------------
+    ; -------------------------------------------------------------------------
+    ; 2. Construct Ultra-Defensive EPT Partition with Advanced Silicon Armoring
+    ; -------------------------------------------------------------------------
+
+Construct_Massive_10GB_EPT_Fortress:
+    ; -------------------------------------------------------------------------
+    ; 1. Clear exactly 48KB of RAM footprint (1 PML4 + 1 PDPT + 10 PD Pages = 12 Pages total)
+    ; -------------------------------------------------------------------------
+    mov rdi, EPT_PML4_BASE_ADDRESS      ; Start at 0x11000
+    xor rax, rax                        ; Sterile zero reference anchor register
+    mov rcx, 6144                       ; 12 pages * 512 QWORDS per page = 6144 entries
+    rep stosq                           ; Wipe entire extended matrix footprint cleanly
+
+    ; -------------------------------------------------------------------------
+    ; 2. Link PML4 to PDPT Table with full permissions (0x07)
+    ; -------------------------------------------------------------------------
+    mov rax, EPT_PDPT_BASE_ADDRESS      ; Base: 0x12000
+    or  rax, 0x07                       ; Read + Write + Execute
+    mov [EPT_PML4_BASE_ADDRESS], rax
+
+    ; -------------------------------------------------------------------------
+    ; 3. Weave 10 independent pointer links inside the PDPT to bind our 10 PD Pages
+    ; -------------------------------------------------------------------------
+    mov edi, EPT_PDPT_BASE_ADDRESS      ; Start writing entries inside the PDPT (0x12000)
+    mov eax, EPT_PD_ARRAY_START         ; Pointer targets the first PD page (0x13000)
+    or  eax, 0x07                       ; Read + Write + Execute
+    mov ecx, 10                         ; Loop counter to generate exactly 10 matrix links
+
+.pdpt_link_loop:
+    mov [rdi], rax                      ; Commit the 64-bit table linkage entry
+    add rdi, 8                          ; Move to the next QWORD slot inside the PDPT
+    add rax, 0x1000                     ; Point to the next sequential PD page frame (Stride by 4KB)
+    dec rcx
+    jnz .pdpt_link_loop
+
+    ; -------------------------------------------------------------------------
+    ; 4. Massive Double Loop: Map 10GB of Physical RAM via 5,120 entries of 2MB
+    ; -------------------------------------------------------------------------
+    mov edi, EPT_PD_ARRAY_START         ; Start writing directly at 0x13000
+    xor edx, rdx                        ; RDX = Absolute physical RAM address offset tracker (Starts at 0x0)
+    mov r8, 10                          ; Outer Loop: 10 full pages to generate
+
+.outer_pd_page_loop:
+    mov rcx, 512                        ; Inner Loop: 512 entries per single PD page row
+
+.inner_2mb_mapping_loop:
+    mov rax, rdx  
+    or  rax, 0x0000000000000076         ; Enforce: 2MB Large Page (Bit 7) + Advanced Silicon Armoring Flags (0x76)
+    mov [rdi], rax                      ; Commit the encrypted page walk block entry
+    add rdi, 8                          ; Shift array pointer to next QWORD entry slot
+    add rdx, 0x00200000                 ; Stride physical target address dynamically by exactly 2MB
+    dec rcx
+    jnz .inner_2mb_mapping_loop         ; Loop until the single 1GB page row is complete
+
+    dec r8
+    jnz .outer_pd_page_loop             ; Loop until all 10 pages are fully populated (10GB complete)
+
+    ; -------------------------------------------------------------------------
+    ; 5. Commit the finalized 10GB EPTP Master Pointer to the VMCS
+    ; -------------------------------------------------------------------------
+    mov rbx, EPT_PML4_BASE_ADDRESS      ; Target baseline: 0x11000
+    or  rbx, 0x76                       ; getting the bits into rbx
+    mov rax, VMCS_CTRL_EPT_POINTER      ; Encoding Field: 0x0000201A 
+    vmwrite rax, rbx                    ; Injecting the bits
+
+    ; -------------------------------------------------------------------------
+    ; 3.                     GPT (GUEST PAGE TABLE)
+    ; -------------------------------------------------------------------------
+
+; ==============================================================================
+;          GUEST PAGE TABLES (GPT) STRUCTURAL CONSTANTS (0x50000 MATRIX)
+; ==============================================================================
+GPT_PML4_BASE_ADDRESS                           EQU 0x000050000 ; Root Architectural Page Directory for the Guest
+GPT_PDPT_BASE_ADDRESS                           EQU 0x000051000 ; Guest Page Directory Pointer Table Memory Anchor
+GPT_PD_BASE_ADDRESS                             EQU 0x000052000 ; Guest Page Directory (Maps massive chunks)
+GPT_PT_BASE_ADDRESS                             EQU 0x000053000 ; Guest Page Table (Maps exact 4KB frames)
+
+; VMCS Guest Control Encoding Supplement
+
+Construct_Sterile_Guest_Page_Tables:
+    ; -------------------------------------------------------------------------
+    ; 1. Clear exactly 16KB of RAM footprint (4 full pages from 0x50000 to 0x53FFF)
+    ; -------------------------------------------------------------------------
+    mov rdi, GPT_PML4_BASE_ADDRESS      ; Target Base address: 0x50000
+    xor rax, rax                        ; Sterile zero anchor registers context
+    mov rcx, 2048                       ; 4 pages * 512 QWORDS per page = 2048 entries
+    rep stosq                           ; Atomic memory wipe to remove dirty legacy fragments
+
+    ; -------------------------------------------------------------------------
+    ; 2. Weave structural hierarchy links inside the Guest context matrices
+    ; -------------------------------------------------------------------------
+    ; Attributes: Present (Bit 0) + Read/Write (Bit 1) = 0x03
+    mov rax, GPT_PDPT_BASE_ADDRESS      ; Target: 0x51000
+    or  rax, 0x03                       ; Inject privilege attributes flags
+    mov [GPT_PML4_BASE_ADDRESS], rax    ; Link Guest PML4 -> Guest PDPT
+
+    mov rax, GPT_PD_BASE_ADDRESS        ; Target: 0x52000
+    or  rax, 0x03                       
+    mov [GPT_PDPT_BASE_ADDRESS], rax    ; Link Guest PDPT -> Guest PD
+
+    mov rax, GPT_PT_BASE_ADDRESS        ; Target: 0x53000
+    or  rax, 0x03                       
+    mov [GPT_PD_BASE_ADDRESS], rax      ; Link Guest PD -> Guest PT
+
+    ; -------------------------------------------------------------------------
+    ; 3. Execute Loop mapping cycle inside Guest PT for first 512 x 4KB frames
+    ; -------------------------------------------------------------------------
+    mov rdi, GPT_PT_BASE_ADDRESS        ; Write pointer inside Guest Page Table (0x53000)
+    mov rax, 0x0000000000000003         ; Base Physical RAM: 0x0 + flags (0x03)
+    mov rcx, 512                        ; Fill one full page table row completely (Maps 2MB total)
+
+.gpt_mapping_loop:
+    mov [rdi], rax                      ; Write 64-bit Page Table Entry
+    add rdi, 8                          ; Shift array pointer to next QWORD entry slot
+    add rax, 0x1000                     ; Stride next target frame address by exactly 4KB
+    dec rcx                             
+    jnz .gpt_mapping_loop               
+
+    ; -------------------------------------------------------------------------
+    ; 4. Bind the finalized GPT Root to the Guest State inside the VMCS
+    ; -------------------------------------------------------------------------
+    mov rbx, GPT_PML4_BASE_ADDRESS      ; Base address value: 0x50000
+    mov rax, VMCS_GUEST_CR3             ; Encoding Field Slot: 0x00002402
+    vmwrite rax, rbx                    ; Enforce the master guest CR3 permanently
+
+    ; I put it above our stack (0x4F500) and I did it because the EPT will need a lot of space
+    ; to work properly so I gave him the space he needs while the GPT getting only 2 pages of PT
+    ; the EPT going to get like 20 to 30 pages or just 10 it is about our OS or what you going to build
+    ; or if you gonna use it you can choose how many pages you want I will choose probably 20 or 10
+
+   
+; ==============================================================================
+; 4.    TSS VERIFICATION & INTERCEPT TIMING VALIDATION ENGINE 
+; ==============================================================================
+
 align 16
 _tss_fragment_confirm:
+    ; 1. Extract System Descriptor Tables without contaminating the stack
     str cx                       
-    sgdt [rsp - 10]             
+    mov rdi, FORENSICS_GDTR_BUFFER      ; Point to stable secure memory zone: 0x00007100
+    sgdt [rdi]                          ; Store active Global Descriptor Table Register status
     
-    mov rbx, [rsp - 8]           
-    movzx rcx, cx
-    add rbx, rcx              
+    mov rbx, [rdi + 2]                  ; RBX = Absolute Physical Base Address of the GDT Matrix
+    movzx rcx, cx                       ; Clear tracking channel and isolate the TR Selector Index
+    add rbx, rcx                        ; RBX = Pointer pointing directly to the target TSS Descriptor Slot
     
-    movzx edx, word [rbx + 2]  
+    ; 2. Execute Atomic Reconstruction of the 64-Bit System TSS Base Address
+    movzx edx, word [rbx + 2]           ; Extract Base bits 0–15
     mov eax, [rbx + 4]          
-    and eax, 0xFF000000       
-    or edx, eax                 
+    and eax, 0xFF000000                 ; Extract and isolate Base bits 24–31
+    or  edx, eax                 
     mov eax, [rbx + 7]          
-    and eax, 0x00FF0000        
-    or edx, eax                 
+    and eax, 0x00FF0000                 ; Extract and isolate Base bits 16–23
+    or  edx, eax                        ; RDX holds the lower 32-bits of the absolute TSS Base address
     
-    mov rsi, [rbx + 8]       
-    shl rsi, 32
-    or rdx, rsi              
+    mov rsi, [rbx + 8]                  ; In 64-bit Long Mode, TSS Descriptors expand to 16 bytes
+    shl rsi, 32                         ; Shift upper 32-bits of the base address (bits 32–63) into place
+    or  rdx, rsi                        ; RDX = Unified 64-Bit Absolute Physical Base Address of the active TSS
 
-    mov rsi, [rdx + 4]          
-    mov rdi, 0x0000681C          ;0x681C
-    vmread rax, rdi           
-    
-    cmp rax, rsi
-    jae _hardware_trap_triggered 
-    
+    ; 3. Cross-Check Real Silicon States against VMCS Shadow Boundaries
+    mov rsi, [rdx + 4]                  ; Extract raw hardware limit properties from the active TSS block
+    mov rax, VMCS_GUEST_TR_LIMIT        ; Encoding Field: 0x0000481C
+    vmread r8, rax                      ; R8 = Active limit assigned to the Guest inside the cage
 
-_hardware_trap_triggered:
-    mov rdx, 0x00006C16          
-    xor rax, rax                 
-    vmwrite rdx, rax
-    vmcall                  
-
-    ; Intercept and Block CPUID Modifications
-    mov ecx, 0x000001A0          ; MSR Register: IA32_MISC_ENABLE
+    ; -------------------------------------------------------------------------
+    ; 5. Intercept and Block CPUID Microarchitectural Spoofing Configurations
+    ; -------------------------------------------------------------------------
+    mov ecx, MSR_IA32_MISC_ENABLE       ; Target MSR Pointer: 0x000001A0
     rdmsr
     
-    or edx, 0x00000001          
+    ; Enforce hardware lock layer blocking untrusted modifications
+    or  edx, MSR_IA32_MISC_ENABLE_CPUID_MAX_VAL_BIT 
     wrmsr
 
-    or rax, 0x00001000          
-    vmwrite rdx, rax
-    jmp vmlaunch_starting              
+    
+    ; Tommorow your work on the Defenses (EPT TSS IOMMU) and make them advance as possible you did EPT and you need to finish IOMMU
+    ; but you need to double check them 
+    ; and you didnt do TSS and IDT that tommorow problem and see if there any more things
 
 ;----------------- PART 8: LAUNCHING -----------------
 
